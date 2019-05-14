@@ -34,7 +34,6 @@ library(sf)
 require(devtools)
 devtools::install_github("dkahle/ggmap", ref = "tidyup")
 library(ggmap)
-register_google(key = "AIzaSyBOHwLPx6VXIgeqj2hhSo21xCy-A5x5M7s")
 ```
 
 ## Checking to see if ggmap is working
