@@ -1,0 +1,211 @@
+---
+title: "GPS_data"
+author: "Melissa Tobin"
+date: '2019-05-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+require(devtools)
+devtools::install_github("dkahle/ggmap", ref = "tidyup")
+library(ggmap)
+register_google(key = "AIzaSyBOHwLPx6VXIgeqj2hhSo21xCy-A5x5M7s")
+```
+
+## Checking to see if ggmap is working
+```{r}
+ggmap(get_googlemap("Victoria, British Columbia")) #YAY it is working 
+```
+
+## Reading in Data
+```{r}
+getwd()
+#setwd("/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/HKR 6000/Data Analysis") #only use on lab computer
+setwd("/Users/MelissaTobin/Documents/HKR 6000/Major Assignment/Data Analysis")
+victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
+
+gps_1 <- read_csv("101001870_gps.csv")
+gps_1_na <- na.omit(gps_1)
+gps_2 <- read_csv("101003720_gps.csv")
+gps_2_na <- na.omit(gps_2)
+
+postal_codes <- read_csv("Victoria_postal codes.csv")
+ID_relationship <- read_csv("Victoria participation_wave1_IDrelationship.csv")
+gps_data <- rbind(gps_1_na, gps_2_na) 
+```
+
+## Making new variables in postal code and ID relationship for double checking later
+```{r}
+postal_codes <- mutate(postal_codes, p_data = 1)
+postal_codes_1 <- select_(postal_codes, "pid", "postal_code", "p_data")
+postal_codes_2 <- mutate(postal_codes_1, treksoft_id = pid)
+ID_relationship <- mutate(ID_relationship, ID_data = 1)
+
+colnames(ID_relationship)[colnames(ID_relationship) == "INTERACT ID"] <- "INTERACT_ID"
+colnames(ID_relationship)[colnames(ID_relationship) == "Sensedoc ID"] <- "sensedoc_ID"
+colnames(ID_relationship)[colnames(ID_relationship) == "Ethica ID"] <- "ethica_ID"
+
+ID_relationship_1 <- select_(ID_relationship, "INTERACT_ID", "sensedoc_ID", "ethica_ID", "ID_data", "treksoft_id")
+```
+
+## Joining Data
+```{r}
+victoria_merged_ID <- left_join(victoria_merged_filter, ID_relationship_1, by = "treksoft_id")
+victoria_merged_ID_1 <- left_join(victoria_merged_ID, postal_codes_2, by = "treksoft_id")
+```
+
+## Loading AAA Shapefiles
+```{r}
+bike_lanes <- st_read("Bike_Lanes.shp") #potentially just pandora
+```
+
+## Plotting to see where it is
+```{r}
+bike_lanes_plot <- ggplot() + geom_sf(data = bike_lanes, size = 3) #this works
+plot(bike_lanes_plot)
+```
+
+## Attempting to change coordinate system to allow both plotting of basemap and bike lane shape file data
+```{r}
+#bike_lanes_3857 <- st_transform(bike_lanes, 3857)
+
+#ggmap_bbox <- function(map) {
+  #if (!inherits(base_map, "ggmap")) stop("map must be a ggmap object")
+  # Extract the bounding box (in lat/lon) from the ggmap to a numeric vector, 
+  # and set the names to what sf::st_bbox expects:
+  #map_bbox <- setNames(unlist(attr(map, "bb")), 
+                       #c("ymin", "xmin", "ymax", "xmax"))
+
+  # Coonvert the bbox to an sf polygon, transform it to 3857, 
+  # and convert back to a bbox (convoluted, but it works)
+  #bbox_3857 <- st_bbox(st_transform(st_as_sfc(st_bbox(map_bbox, crs = 4326)), 3857))
+
+  # Overwrite the bbox of the ggmap object with the transformed coordinates 
+  #attr(map, "bb")$ll.lat <- bbox_3857["ymin"]
+  #attr(map, "bb")$ll.lon <- bbox_3857["xmin"]
+  #attr(map, "bb")$ur.lat <- bbox_3857["ymax"]
+  #attr(map, "bb")$ur.lon <- bbox_3857["xmax"]
+  #map
+#}
+
+# Use the function:
+#map <- ggmap_bbox(base_map)
+#plot(map)
+#ggmap(map) + 
+  #coord_sf(crs = st_crs(3857)) + # force the ggplot2 map to be in 3857
+  #geom_sf(data = bike_lanes_3857, aes(fill = AREA), inherit.aes = FALSE)
+```
+
+## GPS DATA
+## Getting mean of x and y for the base map 
+```{r}
+range(gps_1_na$x_wgs_sd)
+median(gps_1_na$x_wgs_sd)
+mean(gps_1_na$x_wgs_sd)
+mean(gps_1_na$y_wgs_sd)
+```
+
+## Base map - Participant 1
+```{r}
+base_map <- get_map(location = c(-123.365711, 48.533276), maptype = "roadmap", source = "google", zoom = 11)
+plot(base_map)
+```
+
+## GPS Participant 1
+```{r}
+map_1 <- ggmap(base_map) + geom_point(data = gps_1_na, aes(x = x_wgs_sd, y = y_wgs_sd), color = "red", size = 1)
+plot(map_1)
+```
+
+## Base map - Participant 2
+```{r}
+base_map_2 <- get_map(location = c(-123.3821, 48.5), maptype = "terrain", source = "google", zoom = 11)
+plot(base_map)
+```
+
+## GPS Participant 2
+```{r}
+map_2 <- ggmap(base_map) + geom_point(data = gps_2_na, aes(x = x_wgs_sd, y = y_wgs_sd), color = "red", size = 0.5)
+plot(map_2)
+```
+
+## Combining participants maps
+```{r}
+combined_map <- map_1 + geom_point(data = gps_2_na, aes(x = x_wgs_sd, y = y_wgs_sd), color = "blue", size = 0.5)
+plot(combined_map)
+```
+
+
+## Kernel Density Plot - GPS Data - 2 participants combined 
+```{r}
+kernel_density_gps_data_combined <- ggplot(gps_data, aes(x = x_wgs_sd, y = y_wgs_sd, alpha = 0.2)) +
+  geom_point() + 
+    stat_density2d(data = gps_data, 
+                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
+                 bins = 500, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") + 
+   facet_wrap(~ interact_id)
+  
+plot(kernel_density_gps_data_combined)
+```
+
+## Taking out facet_wrap to see if they will combine together for one map
+```{r}
+kernel_density_gps_data_2 <- ggplot(gps_data, aes(x = x_wgs_sd, y = y_wgs_sd, alpha = 0.2)) +
+  geom_point() + 
+    stat_density2d(data = gps_data, 
+                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
+                 bins = 500, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") 
+  
+plot(kernel_density_gps_data_2)
+```
+
+## Plotting basemap onto kernel density plot 
+```{r}
+basemap_density <- ggmap(base_map) + geom_point(data = gps_data, aes(x = x_wgs_sd, y = y_wgs_sd))  + 
+    stat_density2d(data = gps_data, 
+                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
+                 bins = 500, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") 
+plot(basemap_density)
+```
+
+## Making a zoomed in basemap of downtown victoria
+```{r}
+base_map_pandora <- get_map(location = c(-123.359273, 48.427339), maptype = "roadmap", source = "google", zoom = 13)
+plot(base_map_pandora)
+
+basemap_density_pandora <- ggmap(base_map_pandora) + geom_point(data = gps_data, aes(x = x_wgs_sd, y = y_wgs_sd))  + 
+    stat_density2d(data = gps_data, 
+                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
+                 bins = 50, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") #made the bins lower to see what would happen. 
+plot(basemap_density_pandora)
+```
+
+## Attempting to add count variable to see how many times they pass pandora
+```{r}
+count(gps_data, "x_wgs_sd" == -123.35) #not working. Will try to fix tomorrow. 
+```
