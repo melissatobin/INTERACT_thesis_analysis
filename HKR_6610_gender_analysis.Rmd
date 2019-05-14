@@ -1,0 +1,790 @@
+---
+title: "HKR 6610 - Online Survey Analysis (Gender)"
+author: "Melissa Tobin"
+date: '2019-05-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+```
+
+## Reading in Data
+```{r}
+getwd()
+#setwd("/Volumes/hkr-storage/Research/dfuller/Walkabilly/studies/INTERACT/Data/Health") #only use on lab computer
+
+eligibility <- read_csv("eligibility_1vic_main.90838bb.csv")
+health_data <- read_csv("health_1vic_main.90838bb.csv")
+van_eligibility <- read_csv("eligibility_1van_main.90838bb.csv")
+van_health <- read_csv("health_1van_main.90838bb.csv")
+
+```
+
+## Merging Data together
+```{r}
+victoria_merged <- full_join(eligibility, health_data, by = "treksoft_id")
+vancouver_merged <- full_join(van_eligibility, van_health, by = "treksoft_id")
+```
+
+## Merging round two 
+```{r}
+victoria_merged_filter <- filter(victoria_merged, transp_bikes_adults >= 0)
+vancouver_merged_filter <- filter(vancouver_merged, transp_main_mode >= 0)
+```
+
+## Separating Birth Date into Year/Month/Day
+```{r}
+victoria_merged_filter <- separate(victoria_merged_filter, birth_date, c("year", "month", "day"), sep = "-")
+vancouver_merged_filter <- separate(vancouver_merged_filter, birth_date, c("year", "month", "day"), sep = "-")
+```
+
+## Adding new column for age
+```{r}
+victoria_merged_filter$year <- as.numeric(victoria_merged_filter$year)
+victoria_merged_filter <- mutate(victoria_merged_filter, "age_calculated" = 2017 - year)
+vancouver_merged_filter$year <- as.numeric(vancouver_merged_filter$year)
+vancouver_merged_filter <- mutate(vancouver_merged_filter, "age_calculated" = 2018 - year)
+```
+
+## Age descriptive Statistics for Vancouver
+```{r}
+summary(vancouver_merged_filter$age_calculated, na.rm = TRUE)
+
+sd(vancouver_merged_filter$age_calculated)
+```
+
+## Age descriptive Statistics for Victoria
+```{r}
+summary(victoria_merged_filter$age_calculated, na.rm = TRUE)
+sd(victoria_merged_filter$age_calculated)
+```
+
+## Gender and Sex Vancouver
+```{r}
+tabyl(vancouver_merged_filter$sex)
+tabyl(vancouver_merged_filter$gender)
+```
+
+## Gender Victoria
+```{r}
+victoria_merged_filter <- victoria_merged_filter %>% mutate(gender = case_when(
+  gender_vic_1.x == 1 & gender_vic_4.x == 1 ~ "LGBTQ+",
+  gender_vic_1.x == 1 ~ "Men",
+  gender_vic_2.x == 1 ~ "Women", 
+  gender_vic_3.x == 1 ~ "LGBTQ+",
+  gender_vic_4.x == 1 ~ "LGBTQ+"
+)) 
+
+victoria_merged_filter$gender <- factor(victoria_merged_filter$gender, c("Women", "Men", "LGBTQ+")) 
+tabyl(victoria_merged_filter$gender)
+tabyl(victoria_merged_filter$gender_vic.x)
+```
+
+## Age statistics grouped by gender
+```{r}
+describeBy(victoria_merged_filter$age_calculated, victoria_merged_filter$gender)
+```
+
+## Trying a new table 
+```{r}
+table_age_gender <- table(victoria_merged_filter$age_calculated, victoria_merged_filter$gender)
+table_age_gender
+margin.table(table_age_gender, 1)
+prop.table(table_age_gender)
+```
+
+## Plotting Gender
+
+```{r}
+gender_plot <- ggplot(data = victoria_merged_filter, aes(gender)) +
+  geom_bar(aes(fill = gender)) +
+  labs(title = "Gender",
+       x = "Gender Type",
+       y = "Number of Participants (n)")
+plot(gender_plot)
+```
+
+
+## Plotting the gender and age groupings
+```{r}
+age_grouped_plot <- ggplot (data = victoria_merged_filter, aes(age_calculated)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Age ", 
+          x = "Housing Type", 
+          y = "Number of Participants (n)")
+plot(age_grouped_plot)
+```
+
+## Age Categories (using stats can age groups)
+```{r}
+victoria_merged_filter <- victoria_merged_filter %>% mutate(age_categories = case_when(
+  age_calculated < 25 ~ "20-24",
+  age_calculated >= 25 & age_calculated <= 29 ~ "25-29",
+  age_calculated >= 30 & age_calculated <= 34 ~ "30-34", 
+  age_calculated >= 35 & age_calculated <= 39 ~ "35-39",
+  age_calculated >= 40 & age_calculated <= 44 ~ "40-44",
+  age_calculated >= 45 & age_calculated <= 49 ~ "45-49",
+  age_calculated >= 50 & age_calculated <= 54 ~ "50-54",
+  age_calculated >= 55 & age_calculated <= 59 ~ "55-59", 
+  age_calculated >= 60 & age_calculated <= 64 ~ "60-64",
+  age_calculated >= 65 & age_calculated <= 69 ~ "65-69",
+  age_calculated >= 70 & age_calculated <= 74 ~ "70-74", 
+  age_calculated >= 75 & age_calculated <= 79 ~ "75-79",
+  age_calculated >= 80 & age_calculated <= 84 ~ "80-84"
+))
+tabyl(victoria_merged_filter$age_categories)
+```
+
+## Tables for gender and age categories
+
+```{r}
+table(victoria_merged_filter$age_categories, victoria_merged_filter$gender)
+CrossTable(victoria_merged_filter$age_categories, victoria_merged_filter$gender)
+```
+
+## Plotting the gender and age categories
+```{r}
+age_categories_plot <- ggplot (data = victoria_merged_filter, aes(age_categories)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Age ", 
+          x = "Age Categories", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=60, hjust=1))
+plot(age_categories_plot)
+```
+
+
+## Housing 
+```{r}
+victoria_merged_filter <- victoria_merged_filter %>% mutate(housing = case_when(
+  house_tenure == 1 ~ "Owner",
+  house_tenure == 2 ~ "Tenant", 
+  house_tenure == 3 ~ "Resident with friends or relatives",
+  house_tenure == 4 ~ "Resident not with friends or relatives", 
+  house_tenure == 5 ~ "Other"
+))
+
+victoria_merged_filter$housing <- factor(victoria_merged_filter$housing, c("Other", "Resident not with friends or relatives", "Resident with friends or relatives", "Tenant", "Owner")) 
+tabyl(victoria_merged_filter$housing)
+```
+
+## Table for housing and gender
+```{r}
+table(victoria_merged_filter$housing, victoria_merged_filter$gender)
+CrossTable(victoria_merged_filter$housing, victoria_merged_filter$gender)
+```
+
+## Housing Graph
+```{r}
+housing_bar <- ggplot (data = victoria_merged_filter, aes(housing)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Living Situation ", 
+          x = "Living Situation", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=60, hjust=1))
+plot(housing_bar)
+```
+
+
+## Dwelling Type 
+```{r}
+tabyl(victoria_merged_filter$dwelling_type)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(housing_type = case_when(
+  dwelling_type == 1 ~ "Single-detached house",
+  dwelling_type == 2 ~ "Semi-detached house", 
+  dwelling_type == 3 ~ "Row house",
+  dwelling_type == 4 ~ "Apartment/Condo in a duplex or triplex", 
+  dwelling_type == 5 ~ "Apartment/Condo with fewer than 5 storeys",
+  dwelling_type == 6 ~ "Apartment/Condo with more than 5 storeys",
+  dwelling_type == 7 ~ "Mobile Home",
+  dwelling_type == 8 ~ "Seniors Home",
+  dwelling_type == 9 ~ "Other"
+))
+
+victoria_merged_filter$housing_type <- factor(victoria_merged_filter$housing_type, c("Other", "Seniors Home", "Mobile Home", "Apartment/Condo with more than 5 storeys", "Apartment/Condo with fewer than 5 storeys", "Apartment/Condo in a duplex or triplex", "Row house", "Semi-detached house", "Single-detached house" )) 
+tabyl(victoria_merged_filter$housing_type)
+```
+
+## Table for housing type and gender
+```{r}
+table(victoria_merged_filter$housing_type, victoria_merged_filter$gender)
+CrossTable(victoria_merged_filter$housing_type, victoria_merged_filter$gender)
+```
+
+## Housing Type and Gender Graph
+```{r}
+housing_type_bar <- ggplot (data = victoria_merged_filter, aes(housing_type)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Housing ", 
+          x = "Housing Type", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=60, hjust=1))
+plot(housing_type_bar)
+```
+
+
+## Health Status
+```{r}
+tabyl(victoria_merged_filter$sf1)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(health_status = case_when(
+  sf1 == 1 ~ "Excellent",
+  sf1 == 2 ~ "Very Good", 
+  sf1 == 3 ~ "Good",
+  sf1 == 4 ~ "Fair", 
+  sf1 == 5 ~ "Poor"
+))
+
+victoria_merged_filter$health_status <- factor(victoria_merged_filter$health_status, c("Poor", "Fair", "Good", "Very Good", "Excellent")) #WORKED - puts the graph in order
+```
+
+## Trying a new table 
+```{r}
+table_health_status_gender <- table(victoria_merged_filter$health_status, victoria_merged_filter$gender)
+table_health_status_gender
+margin.table(table_health_status_gender, 1)
+margin.table(table_health_status_gender, 2)
+prop.table(table_health_status_gender)
+prop.table(table_health_status_gender, 1)
+prop.table(table_health_status_gender, 2)
+
+CrossTable(victoria_merged_filter$health_status, victoria_merged_filter$gender)
+table(victoria_merged_filter$health_status, victoria_merged_filter$gender)
+## cross table and table are good. 
+```
+
+## Health Status by gender plot 
+```{r}
+health_status_plot <- ggplot(data = victoria_merged_filter, aes(health_status)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Health Status and Gender ", 
+          x = "Health Status ", 
+          y = "Number of Participants (n)") 
+
+plot(health_status_plot)
+```
+
+## Marital Status
+```{r}
+tabyl(victoria_merged_filter$marital_status)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(marital = case_when(
+  marital_status == 1 ~ "Single (never married)",
+  marital_status == 2 ~ "Married (or common law)", 
+  marital_status == 3 ~ "Separated or divorced",
+  marital_status == 4 ~ "Widowed"
+))
+tabyl(victoria_merged_filter$marital)
+```
+
+## Table for Marital status and gender
+```{r}
+table(victoria_merged_filter$marital, victoria_merged_filter$gender)
+CrossTable(victoria_merged_filter$marital, victoria_merged_filter$gender)
+```
+
+## Marital Status and Gender Plot
+```{r}
+marital_status_plot <- ggplot (data = victoria_merged_filter, aes(marital)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Marital Status and Gender ", 
+          x = "Marital Status ", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(marital_status_plot)
+```
+
+## Children (Yes/No)
+```{r}
+tabyl(victoria_merged_filter$children)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(children_1 = case_when(
+  children == 1 ~ "Yes",
+  children == 2 ~ "No"
+))
+tabyl(victoria_merged_filter$children_1)
+```
+
+## Children living 
+```{r}
+tabyl(victoria_merged_filter$living_children)
+```
+
+##Children living and gender plot
+```{r}
+children_living_plot <- ggplot (data = victoria_merged_filter, aes(living_children)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Children living and Gender ", 
+          x = "Children living ", 
+          y = "Number of Participants (n)")
+plot(children_living_plot)
+```
+
+## Children living in household
+```{r}
+tabyl(victoria_merged_filter$children_household)
+```
+
+## Children living in household and Gender Plot
+```{r}
+children_household_plot <- ggplot (data = victoria_merged_filter, aes(children_household)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Children living in household and Gender ", 
+          x = "Children living in household ", 
+          y = "Number of Participants (n)")
+plot(children_household_plot)
+```
+
+## Born in Canada
+```{r}
+tabyl(victoria_merged_filter$born_can)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(born_canada = case_when(
+  born_can == 1 ~ "Yes",
+  born_can == 2 ~ "No"
+))
+tabyl(victoria_merged_filter$born_canada)
+```
+
+## Born in Canada and Gender Plot
+```{r}
+born_canada_plot <- ggplot (data = victoria_merged_filter, aes(born_canada)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Born in Canada and Gender ", 
+          x = "Born in Canada ", 
+          y = "Number of Participants (n)")
+plot(born_canada_plot)
+```
+
+## Ethinic/Cultural Groups
+```{r}
+tabyl(victoria_merged_filter$group_id)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(ethnicity = case_when(
+  group_id_1 == 1 & group_id_2 == 1 & group_id_4 == 1 ~ "Aboriginal",
+  group_id_1 == 1 & group_id_4 == 1 ~ "Aboriginal",
+  group_id_2 == 1 & group_id_4 == 1 ~ "Asian", 
+  group_id_4 == 1 & group_id_1 == 1 ~ "Aboriginal",
+  group_id_4 == 1 & group_id_6 == 1 ~ "Middle Eastern",
+  group_id_2 == 1 ~ "Asian",
+  group_id_4 == 1 ~ "Caucasian",
+  group_id_5 == 1 ~ "Latin American",
+  group_id_77 == 1 ~ "Unknown"
+)) 
+
+victoria_merged_filter$ethnicity <- factor(victoria_merged_filter$ethnicity, c("Middle Eastern", "Latin American", "Aboriginal", "Asian", "Caucasian", "Unknown"))
+tabyl(victoria_merged_filter$ethnicity)
+```
+
+## Ethnicity and Gender Plot
+```{r}
+ethnicity_plot <- ggplot (data = victoria_merged_filter, aes(ethnicity)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Ethnicity and Gender ", 
+          x = "Ethnicity ", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(ethnicity_plot)
+```
+
+## Ethnicity grouped by gender
+```{r}
+CrossTable(victoria_merged_filter$ethnicity, victoria_merged_filter$gender)
+```
+
+
+## Income
+```{r}
+tabyl(victoria_merged_filter$income)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(income_1 = case_when(
+  income == 1 ~ "No income",
+  income == 2 ~ "$1 to $9,999", 
+  income == 3 ~ "$10,000 to $14,999",
+  income == 4 ~ "$15,000 to $19,999", 
+  income == 5 ~ "$20,000 to $29,999",
+  income == 6 ~ "$30,000 to $39,999",
+  income == 7 ~ "$40,000 to $49,999",
+  income == 8 ~ "$50,000 to $99,999",
+  income == 9 ~ "$100,000 to $149,999",
+  income == 10 ~ "$150,000 to $199,999",
+  income == 11 ~ "$200,000 or more",
+  income == 77 ~ "I don't know/Prefer not to answer"
+))
+
+victoria_merged_filter$income_1 <- factor(victoria_merged_filter$income_1, c("No income", "$1 to $9,999", "$10,000 to $14,999", "$15,000 to $19,999", "$20,000 to $29,999", "$30,000 to $39,999", "$40,000 to $49,999","$50,000 to $99,999","$100,000 to $149,999","$150,000 to $199,999", "$200,000 or more", "I don't know/Prefer not to answer"))
+
+tabyl(victoria_merged_filter$income_1)
+summary(victoria_merged_filter$income)
+```
+
+## Income and Gender Plot
+```{r}
+income_plot <- ggplot (data = victoria_merged_filter, aes(income_1)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Income and Gender ", 
+          x = "Income", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(income_plot)
+```
+
+## Income and Gender Table
+```{r}
+CrossTable(victoria_merged_filter$income_1, victoria_merged_filter$gender)
+```
+
+## Income needs
+```{r}
+tabyl(victoria_merged_filter$income_needs)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(income_satisfy = case_when(
+  income_needs == 1 ~ "Very well",
+  income_needs == 2 ~ "Well", 
+  income_needs == 3 ~ "Not so well",
+  income_needs == 4 ~ "Not at all", 
+  income_needs == 77 ~ "I don't know/Prefer not to answer"
+))
+
+tabyl(victoria_merged_filter$income_satisfy)
+```
+
+## Perceived Income and Gender Plot
+```{r}
+perceived_income_plot <- ggplot (data = victoria_merged_filter, aes(income_satisfy)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Income Satisfy Needs and Gender ", 
+          x = "Income Satisfaction", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(perceived_income_plot)
+```
+
+## Bicycle Ownership Adults
+```{r}
+tabyl(victoria_merged_filter$transp_bikes_adults)
+
+bicycle_ownership_adults_plot <- ggplot (data = victoria_merged_filter, aes(transp_bikes_adults)) + 
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Adult Bicycle Ownership and Gender ", 
+          x = "Number of Bicycles", 
+          y = "Number of Participants (n)") 
+plot(bicycle_ownership_adults_plot)
+```
+
+## Bicycle Ownership Kids
+```{r}
+tabyl(victoria_merged_filter$transp_bikes_kids)
+
+bicycle_ownership_kids_plot <- ggplot (data = victoria_merged_filter, aes(transp_bikes_kids)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Kid Bicycle Ownership and Gender ", 
+          x = "Number of Bicycles", 
+          y = "Number of Participants (n)") 
+plot(bicycle_ownership_kids_plot)
+```
+
+## Bicycle Facility Preference - Path 
+```{r}
+tabyl(victoria_merged_filter$bike_comf_a)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(path_comf = case_when(
+  bike_comf_a == 1 ~ "Very uncomfortable",
+  bike_comf_a == 2 ~ "Somewhat uncomfortable", 
+  bike_comf_a == 3 ~ "Somewhat comfortable",
+  bike_comf_a == 4 ~ "Very comfortable"
+))
+
+victoria_merged_filter$path_comf <- factor(victoria_merged_filter$path_comf, c("Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+tabyl(victoria_merged_filter$path_comf)
+```
+
+## Bicycle Facility Preference - Path - Plot
+```{r}
+path_comfortable_plot <- ggplot (data = victoria_merged_filter, aes(path_comf)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Preference for Bicycle Paths and Gender ", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(path_comfortable_plot)
+CrossTable(victoria_merged_filter$path_comf, victoria_merged_filter$gender)
+```
+
+## Bicycle Facility Preference - Residential street 
+```{r}
+tabyl(victoria_merged_filter$bike_comf_b)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(residential_street_comf = case_when(
+  bike_comf_b == 1 ~ "Very uncomfortable",
+  bike_comf_b == 2 ~ "Somewhat uncomfortable", 
+  bike_comf_b == 3 ~ "Somewhat comfortable",
+  bike_comf_b == 4 ~ "Very comfortable"
+))
+
+victoria_merged_filter$residential_street_comf <- factor(victoria_merged_filter$residential_street_comf, c("Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
+tabyl(victoria_merged_filter$residential_street_comf)
+CrossTable(victoria_merged_filter$residential_street_comf, victoria_merged_filter$gender)
+```
+
+## Bicycle Facility Preference - Residental Street - Plot
+```{r}
+residential_street_comfortable_plot <- ggplot (data = victoria_merged_filter, aes(residential_street_comf)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Preference for Residential Street and Gender ", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(residential_street_comfortable_plot)
+```
+
+## Bicycle Facility Preference - Residential street with traffic calming measures
+```{r}
+tabyl(victoria_merged_filter$bike_comf_c)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(res_street_traffic_calming_comf = case_when(
+  bike_comf_c == 1 ~ "Very uncomfortable",
+  bike_comf_c == 2 ~ "Somewhat uncomfortable", 
+  bike_comf_c == 3 ~ "Somewhat comfortable",
+  bike_comf_c == 4 ~ "Very comfortable",
+  bike_comf_c == 77 ~ "I don't know/Prefer not to answer"
+))
+
+victoria_merged_filter$res_street_traffic_calming_comf <- factor(victoria_merged_filter$res_street_traffic_calming_comf, c( "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable", "I don't know/Prefer not to answer"))
+tabyl(victoria_merged_filter$res_street_traffic_calming_comf)
+CrossTable(victoria_merged_filter$res_street_traffic_calming_comf, victoria_merged_filter$gender)
+```
+
+## Bicycle Facility Preference - Residental Street with traffic calming - Plot
+```{r}
+res_street_traffic_calming_comfortable_plot <- ggplot (data = victoria_merged_filter, aes(res_street_traffic_calming_comf)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Preference for Residential Street with Traffic Calming and Gender", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(res_street_traffic_calming_comfortable_plot)
+```
+
+## Bicycle Facility Preference - Major Street with no bike lane 
+```{r}
+tabyl(victoria_merged_filter$bike_comf_d)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(major_street_no_bike_lane = case_when(
+  bike_comf_d == 1 ~ "Very uncomfortable",
+  bike_comf_d == 2 ~ "Somewhat uncomfortable", 
+  bike_comf_d == 3 ~ "Somewhat comfortable",
+  bike_comf_d == 4 ~ "Very comfortable"
+))
+
+victoria_merged_filter$major_street_no_bike_lane <- factor(victoria_merged_filter$major_street_no_bike_lane, c("Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
+tabyl(victoria_merged_filter$major_street_no_bike_lane)
+CrossTable(victoria_merged_filter$major_street_no_bike_lane, victoria_merged_filter$gender)
+```
+
+## Bicycle Facility Preference - Major street with no bike lane - Plot
+```{r}
+major_street_no_bike_lane_plot <- ggplot (data = victoria_merged_filter, aes(major_street_no_bike_lane)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Preference for Major Street with No Bike Lane and Gender ", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(major_street_no_bike_lane_plot)
+```
+
+## Bicycle Facility Preference - Major Street with bike lane 
+```{r}
+tabyl(victoria_merged_filter$bike_comf_e)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(major_street_bike_lane = case_when(
+  bike_comf_e == 1 ~ "Very uncomfortable",
+  bike_comf_e == 2 ~ "Somewhat uncomfortable", 
+  bike_comf_e == 3 ~ "Somewhat comfortable",
+  bike_comf_e == 4 ~ "Very comfortable"
+))
+
+victoria_merged_filter$major_street_bike_lane <- factor(victoria_merged_filter$major_street_bike_lane, c("Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
+tabyl(victoria_merged_filter$major_street_bike_lane)
+CrossTable(victoria_merged_filter$major_street_bike_lane, victoria_merged_filter$gender)
+```
+
+## Bicycle Facility Preference - Major street with bike lane - Plot
+```{r}
+major_street_bike_lane_plot <- ggplot (data = victoria_merged_filter, aes(major_street_bike_lane)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Preference for Major Street with Bike Lane and Gender ", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(major_street_bike_lane_plot)
+```
+
+## Bicycle Facility Preference - Major Street with separated bike lane 
+```{r}
+tabyl(victoria_merged_filter$bike_comf_f)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(major_street_separated_bike_lane = case_when(
+  bike_comf_f == 1 ~ "Very uncomfortable",
+  bike_comf_f == 2 ~ "Somewhat uncomfortable", 
+  bike_comf_f == 3 ~ "Somewhat comfortable",
+  bike_comf_f == 4 ~ "Very comfortable",
+  bike_comf_f == 77 ~ "I don't know/Prefer not to answer"
+))
+
+victoria_merged_filter$major_street_separated_bike_lane <- factor(victoria_merged_filter$major_street_separated_bike_lane, c( "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable", "I don't know/Prefer not to answer"))
+tabyl(victoria_merged_filter$major_street_separated_bike_lane)
+CrossTable(victoria_merged_filter$major_street_separated_bike_lane, victoria_merged_filter$gender)
+```
+
+## Bicycle Facility Preference - Major street with separated bike lane - Plot
+```{r}
+major_street_separated_bike_lane_plot <- ggplot (data = victoria_merged_filter, aes(major_street_separated_bike_lane)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "Preference for Major Street with Separated Bike Lane and Gender ", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(major_street_separated_bike_lane_plot)
+```
+
+### AAA Familiarity 
+```{r}
+tabyl(victoria_merged_filter$aaa_familiarity)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(aaa_familiarity_1 = case_when(
+  aaa_familiarity == 1 ~ "Yes",
+  aaa_familiarity == 2 ~ "No"
+))
+
+tabyl(victoria_merged_filter$aaa_familiarity_1)
+```
+
+## AAA Familiarity - Plot
+```{r}
+aaa_familiarity_plot <- ggplot (data = victoria_merged_filter, aes(aaa_familiarity_1)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "All Ages and Abilities Cycling Network Familiarity ", 
+          x = "Familiar with AAA", 
+          y = "Number of Participants (n)")
+plot(aaa_familiarity_plot)
+```
+
+## AAA Good idea
+
+```{r}
+tabyl(victoria_merged_filter$aaa_idea)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(aaa_idea_1 = case_when(
+  aaa_idea == 1 ~ "Very good idea",
+  aaa_idea == 2 ~ "Somewhat good idea",
+  aaa_idea == 3 ~ "Somewhat bad idea",
+  aaa_idea == 4 ~ "Very bad idea",
+  aaa_idea == 77 ~ "I don't know"
+))
+
+victoria_merged_filter$aaa_idea_1 <- factor(victoria_merged_filter$aaa_idea_1, c("I don't know", "Very bad idea", "Somewhat bad idea", "Somewhat good idea", "Very good idea"))
+tabyl(victoria_merged_filter$aaa_idea_1)
+```
+
+## AAA Familiarity - Plot
+```{r}
+aaa_idea_1_plot <- ggplot (data = victoria_merged_filter, aes(aaa_idea_1)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "All Ages and Abilities Cycling Network Idea ", 
+          x = "Preference for AAA", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+plot(aaa_idea_1_plot)
+```
+
+## AAA Cycle More
+```{r}
+tabyl(victoria_merged_filter$aaa_bike_more)
+
+victoria_merged_filter <- victoria_merged_filter %>% mutate(aaa_bike_more_1 = case_when(
+  aaa_bike_more == 1 ~ "Yes",
+  aaa_bike_more == 2 ~ "No"
+))
+
+tabyl(victoria_merged_filter$aaa_bike_more_1)
+```
+
+## AAA Bike More - Plot
+```{r}
+aaa_bike_more_1_plot <- ggplot (data = victoria_merged_filter, aes(aaa_bike_more_1)) +
+    geom_bar(aes(fill = gender), position = "dodge") + 
+      labs(title = "All Ages and Abilities Cycling Network - Bicycle more ", 
+          x = "Bicycle more",
+          y = "Number of Participants (n)")
+plot(aaa_bike_more_1_plot)
+```
+
+## Physical Activity - Cycling 
+```{r}
+tabyl(victoria_merged_filter$travel_bike)
+victoria_merged_filter <- mutate(victoria_merged_filter, "Cycling_formula" = 6 * travel_bike_freq * travel_bike)
+victoria_merged_filter <- mutate(victoria_merged_filter, "Walking_formula" = 3.3 * travel_walk_freq * travel_walk)
+victoria_merged_filter <- mutate(victoria_merged_filter, "Total_transport_formula" = Cycling_formula + Walking_formula)
+```
+
+## Plotting PA
+```{r}
+PA_cycling_plot <- ggplot (data = victoria_merged_filter, aes(Cycling_formula)) + 
+    geom_density(aes(fill = gender), position = "dodge", alpha = 0.5) + 
+      labs(title = "Cycling for Transport Physical Activity", 
+          x = "Cycling MET Minutes of Physical Activity", 
+          y = "Percent of Participants")
+plot(PA_cycling_plot)
+```
+
+## Adding normal distribution to PA plot 
+```{r}
+victoria_merged_filter$Cycling_formula <- as.numeric(victoria_merged_filter$Cycling_formula)
+PA_cycling_normal_plot  <- PA_cycling_plot +
+  stat_function(fun = dnorm, args = list(mean = mean(victoria_merged_filter$Cycling_formula, na.rm = TRUE), sd =sd(victoria_merged_filter$Cycling_formula, na.rm = TRUE)), color = "red", size = 1)
+plot(PA_cycling_normal_plot)
+```
+
+## Descriptive Stats for Cycling PA
+```{r}
+summary(victoria_merged_filter$Cycling_formula)
+describeBy(victoria_merged_filter$Cycling_formula)
+describeBy(victoria_merged_filter$Cycling_formula, victoria_merged_filter$gender)
+
+tabyl(victoria_merged_filter$Cycling_formula)
+```
+
+## Filtering out other in gender category 
+
+```{r}
+victoria_merged_filter <- victoria_merged_filter %>% mutate(gender_new = case_when(
+  gender == "Female" ~ "Female",
+  gender == "Male" ~ "Male"
+)) 
+tabyl(victoria_merged_filter$gender_new)
+```
+
+## Regression - Regression Model 1 with just PA and Gender 
+```{r}
+gender_regression_1 <- lm(Cycling_formula ~ gender,  data = victoria_merged_filter)
+
+summary(gender_regression_1)
+lm.beta(gender_regression_1) ##This isn't working. 
+confint(gender_regression_1)
+plot(gender_regression_1)
+```
+
+## Write CSV
+```{r}
+write.csv(victoria_merged_filter, file = "victoria_merged_filter.csv")
+```
+
