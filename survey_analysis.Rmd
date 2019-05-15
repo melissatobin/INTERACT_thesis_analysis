@@ -345,3 +345,79 @@ cor.test(victoria_merged_filter$separated_bike_lane, victoria_merged_filter$Cycl
 support_regression <- lm(Cycling_formula ~ factor(support_index), data = victoria_merged_filter)
 summary(support_regression)
 ```
+
+## Checking self-report exposure
+```{r}
+tabyl(victoria_merged_filter$vicroads_f)
+#86% bike on pandora 
+```
+
+## Self-report Physcial Activity Data - Total PA
+## Work - Vigorous 
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "work_formula" = 8 * work_vigpa * work_vigpa_freq)
+tabyl(victoria_merged_filter$work_formula)
+```
+
+## Travel Walking 
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "travel_walk_formula" = 3.3 * travel_walk_freq * travel_walk)
+tabyl(victoria_merged_filter$travel_walk_formula)
+```
+
+## Leisure Walking
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "leisure_walk_formula" = 3.3 * leisure_walk_freq * leisure_walk)
+tabyl(victoria_merged_filter$leisure_walk_formula)
+```
+
+## Total Walking MET-minutes/week
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "total_walk_formula" = leisure_walk_formula + travel_walk_formula)
+tabyl(victoria_merged_filter$total_walk_formula)
+```
+
+## Moderate Leisure
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "mod_leisure_formula" = 4* modpa_leisure_freq + modpa_leisure)
+tabyl(victoria_merged_filter$mod_leisure_formula)
+```
+
+Vigorous Leisure
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "vig_leisure_formula" = 8* leisure_vigpa_freq + leisure_vigpa)
+tabyl(victoria_merged_filter$vig_leisure_formula)
+```
+
+## Total Leisure 
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "total_leisure_formula" = leisure_walk_formula + mod_leisure_formula + vig_leisure_formula)
+tabyl(victoria_merged_filter$total_leisure_formula)
+```
+
+## Total Moderate MET-minutes/week
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "total_moderate_met_formula" = mod_leisure_formula + Cycling_formula)
+tabyl(victoria_merged_filter$total_moderate_met_formula)
+```
+
+## Total Vigorous MET-minutes/week
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "total_vigorous_met_formula" = work_formula + vig_leisure_formula)
+tabyl(victoria_merged_filter$total_vigorous_met_formula)
+```
+
+## Total physical activity MET-minutes/week
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "total_pa_met_formula" = total_leisure_formula + total_moderate_met_formula + total_vigorous_met_formula)
+tabyl(victoria_merged_filter$total_pa_met_formula)
+```
+
+## Plot 
+```{r}
+PA_total_plot <- ggplot (data = victoria_merged_filter, aes(total_pa_met_formula)) + 
+    geom_density() + theme_bw()
+    
+plot(PA_total_plot)
+```
+
