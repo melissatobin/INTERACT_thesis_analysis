@@ -7,6 +7,17 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+
 ```
 
 
@@ -31,180 +42,184 @@ library(KernSmooth)
 library(raster)
 library(sp)
 library(sf)
+library(lubridate)
+library(rgdal)
 require(devtools)
-devtools::install_github("dkahle/ggmap", ref = "tidyup")
-library(ggmap)
-```
-
-## Checking to see if ggmap is working
-```{r}
-ggmap(get_googlemap("Victoria, British Columbia")) #YAY it is working 
+#install.packages("data.table")
+library(data.table)
 ```
 
 ## Reading in Data
 ```{r}
 getwd()
 #setwd("/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/HKR 6000/Data Analysis") #only use on lab computer
-setwd("/Users/MelissaTobin/Documents/HKR 6000/Major Assignment/Data Analysis")
-victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
 
-gps_1 <- read_csv("101001870_gps.csv")
-gps_1_na <- na.omit(gps_1)
-gps_2 <- read_csv("101003720_gps.csv")
-gps_2_na <- na.omit(gps_2)
+victoria_merged_filter <-
+  fread("victoria_merged_filter.csv", sep = ",")
 
-postal_codes <- read_csv("Victoria_postal codes.csv")
-ID_relationship <- read_csv("Victoria participation_wave1_IDrelationship.csv")
-gps_data <- rbind(gps_1_na, gps_2_na) 
-```
+filenames <-
+  list.files(path = "./all_gps", full.names = TRUE) #[1:3]#take out [1:3] when using all gps datasets
 
-## Making new variables in postal code and ID relationship for double checking later
-```{r}
-postal_codes <- mutate(postal_codes, p_data = 1)
-postal_codes_1 <- select_(postal_codes, "pid", "postal_code", "p_data")
-postal_codes_2 <- mutate(postal_codes_1, treksoft_id = pid)
-ID_relationship <- mutate(ID_relationship, ID_data = 1)
+nFiles <- length(filenames)
 
-colnames(ID_relationship)[colnames(ID_relationship) == "INTERACT ID"] <- "INTERACT_ID"
-colnames(ID_relationship)[colnames(ID_relationship) == "Sensedoc ID"] <- "sensedoc_ID"
-colnames(ID_relationship)[colnames(ID_relationship) == "Ethica ID"] <- "ethica_ID"
-
-ID_relationship_1 <- select_(ID_relationship, "INTERACT_ID", "sensedoc_ID", "ethica_ID", "ID_data", "treksoft_id")
-```
-
-## Joining Data
-```{r}
-victoria_merged_ID <- left_join(victoria_merged_filter, ID_relationship_1, by = "treksoft_id")
-victoria_merged_ID_1 <- left_join(victoria_merged_ID, postal_codes_2, by = "treksoft_id")
-```
-
-## Loading AAA Shapefiles
-```{r}
-bike_lanes <- st_read("Bike_Lanes.shp") #potentially just pandora
-```
-
-## Plotting to see where it is
-```{r}
-bike_lanes_plot <- ggplot() + geom_sf(data = bike_lanes, size = 3) #this works
-plot(bike_lanes_plot)
-```
-
-## Attempting to change coordinate system to allow both plotting of basemap and bike lane shape file data
-```{r}
-#bike_lanes_3857 <- st_transform(bike_lanes, 3857)
-
-#ggmap_bbox <- function(map) {
-  #if (!inherits(base_map, "ggmap")) stop("map must be a ggmap object")
-  # Extract the bounding box (in lat/lon) from the ggmap to a numeric vector, 
-  # and set the names to what sf::st_bbox expects:
-  #map_bbox <- setNames(unlist(attr(map, "bb")), 
-                       #c("ymin", "xmin", "ymax", "xmax"))
-
-  # Coonvert the bbox to an sf polygon, transform it to 3857, 
-  # and convert back to a bbox (convoluted, but it works)
-  #bbox_3857 <- st_bbox(st_transform(st_as_sfc(st_bbox(map_bbox, crs = 4326)), 3857))
-
-  # Overwrite the bbox of the ggmap object with the transformed coordinates 
-  #attr(map, "bb")$ll.lat <- bbox_3857["ymin"]
-  #attr(map, "bb")$ll.lon <- bbox_3857["xmin"]
-  #attr(map, "bb")$ur.lat <- bbox_3857["ymax"]
-  #attr(map, "bb")$ur.lon <- bbox_3857["xmax"]
-  #map
-#}
-
-# Use the function:
-#map <- ggmap_bbox(base_map)
-#plot(map)
-#ggmap(map) + 
-  #coord_sf(crs = st_crs(3857)) + # force the ggplot2 map to be in 3857
-  #geom_sf(data = bike_lanes_3857, aes(fill = AREA), inherit.aes = FALSE)
-```
-
-## GPS DATA
-## Getting mean of x and y for the base map 
-```{r}
-range(gps_1_na$x_wgs_sd)
-median(gps_1_na$x_wgs_sd)
-mean(gps_1_na$x_wgs_sd)
-mean(gps_1_na$y_wgs_sd)
-```
-
-## Base map - Participant 1
-```{r}
-base_map <- get_map(location = c(-123.365711, 48.533276), maptype = "roadmap", source = "google", zoom = 11)
-plot(base_map)
-```
-
-## GPS Participant 1
-```{r}
-map_1 <- ggmap(base_map) + geom_point(data = gps_1_na, aes(x = x_wgs_sd, y = y_wgs_sd), color = "red", size = 1)
-plot(map_1)
-```
-
-## Base map - Participant 2
-```{r}
-base_map_2 <- get_map(location = c(-123.3821, 48.5), maptype = "terrain", source = "google", zoom = 11)
-plot(base_map)
-```
-
-## GPS Participant 2
-```{r}
-map_2 <- ggmap(base_map) + geom_point(data = gps_2_na, aes(x = x_wgs_sd, y = y_wgs_sd), color = "red", size = 0.5)
-plot(map_2)
-```
-
-## Combining participants maps
-```{r}
-combined_map <- map_1 + geom_point(data = gps_2_na, aes(x = x_wgs_sd, y = y_wgs_sd), color = "blue", size = 0.5)
-plot(combined_map)
-```
-
-
-## Kernel Density Plot - GPS Data - 2 participants combined 
-```{r}
-kernel_density_gps_data_combined <- ggplot(gps_data, aes(x = x_wgs_sd, y = y_wgs_sd, alpha = 0.2)) +
-  geom_point() + 
-    stat_density2d(data = gps_data, 
-                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
-                 bins = 500, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") + 
-   facet_wrap(~ interact_id)
+start_time <- Sys.time()
+all_gps_list <- lapply(filenames, function(i) {
+  print(paste0("[", which(i == filenames), "/", nFiles ,"]"))
+  fread(i, nThread = 8)
   
-plot(kernel_density_gps_data_combined)
+}) #function to iterate through all excel files in the all_gps folder and read as a tibble and assign to a list
+
+all_gps_list_na_rm <- lapply(all_gps_list, function(i) {
+  na.omit(i)
+})
+
+all_gps_list <- NULL
+gc()
+
+#iterate through each list element and convert each row to a point and assign to new list of point datasets where each list element corresponds to a single participants gps traces
+
+#convert to spatial
+all_gps_list_sf <- lapply(all_gps_list_na_rm, function(i) {
+  st_as_sf(i, coords = c("lon", "lat"), crs = 4326)
+})
+
+all_gps_list_na_rm <- NULL
+gc()
+
+#project
+all_gps_list_project <- lapply(all_gps_list_sf, function(i) {
+  st_transform(i, 26910)
+})
+
+#fwrite(all_gps_list_project, "all_gps_list_project.rda")
+save(all_gps_list_project, file = "all_gps_list_project.rda")
+rm(all_gps_list_sf)
+gc()
+#load bikelanes
+
+#bike_lanes <- st_read(dsn ="./Bike_Lanes",layer = "Bike_Lanes.shp") #potentially just pandora
+#this didn't work
+
+bike_lanes_1 <-
+  st_read("./Bike_Lanes/Bike_Lanes.shp") #this worked instead
+pandora <- bike_lanes_1 %>% filter(FullDescr == "Protected bike lane")
+plot(pandora)
+
+pandora <- st_transform(pandora, 26910)
+
+pandora_buffer <- st_buffer(pandora, dist = 200)
+#fwrite(pandora_buffer, "pandora_buffer.csv", sep = ",")
+save(pandora_buffer, file = "pandora_buffer.rda")
+
+#for each gps trace, count the number of points within the 200m pandora buffer
+
+join_gps_to_buffer <- lapply(all_gps_list_project, function(i) {
+  i %>%
+    st_join(pandora_buffer)
+})
+
+filter_gps_in_buffer <- lapply(join_gps_to_buffer, function(i) {
+  i %>%
+    filter(!(is.na(FullDescr)))
+})
+#each list element in filter_gps_in_buffer corresponds to the gps points that fall within 200m of the pandora protected bikelane for a particular participant.
+
+#join_gps_to_buffer <- NULL
+gc()
+#takes the total number of GPS points for each participant and groups by INTERACT ID
+gps_join_1 <- lapply(all_gps_list_project, function(i) {
+  i %>%
+    group_by(interact_id) %>%
+    summarise(n = n()) %>%
+    as_tibble()
+}) #THIS WORKS!!!!
+#fwrite(gps_join_1, "gps_join_1.csv", sep = ",")
+save(gps_join_1, file = "gps_join_1.rda")
+
+
+#takes the total number of GPS points that touch pandora buffer for each participant and groups by INTERACT ID
+gps_join_2 <- lapply(filter_gps_in_buffer, function(i) {
+  i %>%
+    group_by(interact_id) %>% summarise(n = n()) %>% as_tibble()
+})
+
+filter_gps_in_buffer <- NULL
+gc()
+#joining total points (n.x.) with intersections with pandora (n.y)
+gps_join_all <-
+  gps_join_1 %>% bind_rows() %>% left_join((gps_join_2 %>% bind_rows()), by =
+                                             "interact_id")
+save(gps_join_all, file = "gps_join_all.rda")
+##Can't figure out a way to change the NA to zero. I tried fill = 0
+
+gps_join_all_select <-
+  select_(gps_join_all, "interact_id", "n.x", "n.y")
+
+gps_join_all_amount <- mutate(gps_join_all_select, amount = n.y / n.x)
+
+gps_join_all_percent <-
+  mutate(gps_join_all_amount, percent = amount * 100)
+save(gps_join_all_percent, file = "gps_join_all_percent.rda")
+#Next steps
+#1. fill NA with 0
+#2. remove geometry x and y to help with the speed - done
+#3. calculate percentage of total time/total points to calculate final exposure variable. - done
+
+
+
+#you could find a way to convert each list element to a dataframe, then use bind_rows to create 1 giant dataset and aggregate exposure that way.
+
 ```
 
-## Taking out facet_wrap to see if they will combine together for one map
+## Check number of days and hours for each participant
 ```{r}
-kernel_density_gps_data_2 <- ggplot(gps_data, aes(x = x_wgs_sd, y = y_wgs_sd, alpha = 0.2)) +
-  geom_point() + 
-    stat_density2d(data = gps_data, 
-                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
-                 bins = 500, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") 
-  
-plot(kernel_density_gps_data_2)
+#this gives total number of days, seconds and hours and gives an average of hours per day collected
+gps_wear_time_overall <- lapply(all_gps_list_project,function(i) {
+  i %>% group_by(interact_id) %>% 
+    mutate(doy = yday(utcdate)#,
+           ) %>% 
+    summarise(unique_days = length(unique(doy)),
+              unique_seconds = length(unique(utcdate))) %>% 
+  mutate(unique_hours = unique_seconds/60/60,
+         hours_per_day = unique_hours/unique_days
+         )})
+#this gives actual total number of hours per day 
+gps_wear_time_by_day_unique_time_stamps <- lapply(all_gps_list_project,function(i) {
+  i %>% group_by(interact_id) %>% 
+    mutate(doy = yday(utcdate)#,
+           ) %>% 
+    group_by(doy) %>%
+    summarise(unique_days = length(unique(doy)),
+              unique_seconds = length(unique(utcdate))) %>% 
+  mutate(unique_hours = unique_seconds/60/60,
+         hours_per_day = unique_hours/unique_days
+         )})
+save(gps_wear_time_by_day_unique_time_stamps, file = "gps_wear_time_by_day_unique_time_stamps.rda")
+#this gives the time of day that participants wore as well as total time per day
+
+load("all_gps_list_project.rda")
+
+gps_wear_time_by_day_min_max_time_stamps <- lapply(all_gps_list_project, function(i) {
+  i %>% group_by(interact_id) %>% 
+    mutate(doy = yday(utcdate)
+           ) %>% 
+    group_by(doy) %>%
+    summarise(interact_id = interact_id,
+              unique_days = length(unique(doy)),
+              unique_seconds = length(unique(utcdate)),
+              n_traces = n(),
+              min_time = min(utcdate),
+              max_time = max(utcdate)
+              ) %>% 
+    mutate(total_time = (as.POSIXct(max_time) - as.POSIXct(min_time)),
+           unique_hours = unique_seconds/60/60,
+           hours_per_day = unique_hours/unique_days)})
+
+
+#save(gps_wear_time_by_day_min_max_time_stamps, file = "gps_wear_time_by_day_min_max_time_stamps.rda")
+wear_time_stamps <- do.call(rbind, lapply(gps_wear_time_by_day_min_max_time_stamps, function(x) as.data.frame(x)))
+wear_time_stamps$geometry <- NULL
+fwrite(wear_time_stamps, "wear_time_stamps.csv", sep = ",", showProgress = T)
+
 ```
 
-## Plotting basemap onto kernel density plot 
-```{r}
-basemap_density <- ggmap(base_map) + geom_point(data = gps_data, aes(x = x_wgs_sd, y = y_wgs_sd))  + 
-    stat_density2d(data = gps_data, 
-                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
-                 bins = 500, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") 
-plot(basemap_density)
-```
-
-## Making a zoomed in basemap of downtown victoria
-```{r}
-base_map_pandora <- get_map(location = c(-123.359273, 48.427339), maptype = "roadmap", source = "google", zoom = 13)
-plot(base_map_pandora)
-
-basemap_density_pandora <- ggmap(base_map_pandora) + geom_point(data = gps_data, aes(x = x_wgs_sd, y = y_wgs_sd))  + 
-    stat_density2d(data = gps_data, 
-                 aes(x = x_wgs_sd, y = y_wgs_sd, fill = ..level.., alpha = ..level..), size = 1, 
-                 bins = 50, geom = "polygon", h = 0.02) + scale_fill_gradient(low = "green", high = "red") #made the bins lower to see what would happen. 
-plot(basemap_density_pandora)
-```
-
-## Attempting to add count variable to see how many times they pass pandora
-```{r}
-count(gps_data, "x_wgs_sd" == -123.35) #not working. Will try to fix tomorrow. 
-```
