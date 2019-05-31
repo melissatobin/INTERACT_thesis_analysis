@@ -1,0 +1,51 @@
+---
+title: "gps_participant_survey_analysis"
+author: "Melissa Tobin"
+date: "31/05/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+```
+
+## Loading Packages
+```{r}
+install.packages("lmtest")
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+```
+
+## Loading in Data
+```{r}
+victoria_gps_only <- read_csv("victoria_gps_only.csv")
+```
+
