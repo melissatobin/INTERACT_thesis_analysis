@@ -8,6 +8,17 @@ output: html_document
 ```{r setup, include=FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 1)
 knitr::opts_chunk$set(echo = TRUE)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+
 ```
 
 ## Loading Packages
