@@ -39,8 +39,76 @@ library(sf)
 getwd()
 #setwd("/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/HKR 6000/Data Analysis") #only use on lab computer
 #setwd("/Users/MelissaTobin/Documents/HKR 6000/Major Assignment/Data Analysis")
-victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
+victoria_new <- read_csv("health_1vic_main.bf53654.csv") #victoria health survey
+victoria_eligibility <- read_csv("eligibility_1vic_main.f209866.csv") #victoria eligibility survey
+
+victoria_eligibility[, "interact_id"] <- apply(victoria_eligibility[, "interact_id"], 1, function(x) as.integer(x))
+victoria_new[, "interact_id"] <- apply(victoria_new[, "interact_id"], 1, function(x) as.integer(x)) #getting both health and elibiligity survey to have the same INTERACT ID (one file started with 0101 and the other started with 101)
+
+victoria_merged <- full_join(victoria_eligibility, victoria_new, by = "interact_id") #merging eligibility and health survey together 
+
+victoria_merged_filter <- filter(victoria_merged, transp_bikes_adults >= 0) #filtering for participants who did eligibility but didn't actually complete the health survey (308 completed eligiblity but only 281 completed health survey)
 ```
+
+## Reading in ID relationship and GPS ID relationship data
+```{r}
+ID_relationship <- read_csv("Victoria participation_wave1_IDrelationship.csv") #this is the file from Karen with the INTERACT ID's that she created
+
+gps_ID_relationship <- read_csv("pairings_with_sdid.csv") #this is the other file with the "INTERACT ID's" that are actually GPS IDs
+tabyl(gps_ID_relationship$sensedoc_id)
+```
+
+## Changing column names and selecting important columns and filtering data
+```{r}
+ID_relationship <- mutate(ID_relationship, ID_data = 1)
+
+#changing column names to match other data sets and make them easier to work with in R 
+colnames(ID_relationship)[colnames(ID_relationship) == "INTERACT ID"] <- "interact_id"
+colnames(ID_relationship)[colnames(ID_relationship) == "Sensedoc ID"] <- "sensedoc_ID"
+colnames(ID_relationship)[colnames(ID_relationship) == "Ethica ID"] <- "ethica_ID"
+
+ID_relationship_1 <- dplyr::select(ID_relationship, "interact_id", "sensedoc_ID", "ethica_ID", "ID_data", "treksoft_id") #selecting only the important columns (there were a bunch of columns with all NA's (X5 to X20))
+
+typeof(ID_relationship_1$treksoft_id)
+as.numeric(ID_relationship_1$treksoft_id)
+
+ID_relationship_2 <- ID_relationship_1 %>% mutate(NA_checker = case_when(
+  treksoft_id < 908 ~ "1",
+  treksoft_id == 908 ~ "2",
+  treksoft_id > 908 ~ "1"
+)) #participant 908 didn't complete the health survey and was giving alot of problems so we filtered 908 out. 
+
+ID_relationship_3 <- ID_relationship_2 %>% filter(NA_checker == 1) #brings it down to the 308 people who completed eligibility survey
+```
+
+## GPS linking data - changing column names, selecting out important data and working with NA
+```{r}
+#changing column names to match other data sets and make them easier to work with in R 
+colnames(gps_ID_relationship)[colnames(gps_ID_relationship)== "interact_id"] <- "gps_id" #changed this INTERACT ID to GPS ID since this is actually the gps ID not the INTERACT ID's that Karen assigned. 
+colnames(gps_ID_relationship)[colnames(gps_ID_relationship)== "sensedoc_id"] <- "sensedoc_ID"
+
+gps_ID_relationship <- dplyr::select(gps_ID_relationship, "gps_id", "sensedoc_ID")  #selecting only the important columns. The treksoft ID and ethica in this file were not complete
+
+gps_ID_relationship_1 <- mutate(gps_ID_relationship, gps_checker = 1) 
+```
+
+## Joining Data
+```{r}
+merged_ID <- left_join(ID_relationship_3, gps_ID_relationship_1, by = "sensedoc_ID") #merging both ID relationship files together using Sensedoc ID - common variable in both files
+
+
+merged_ID_gps <- filter(merged_ID, gps_checker == 1) #filtering to just get the IDS for participants who did GPS analysis. If you leave everybody, then you have to deal with NA issues
+tabyl(merged_ID$gps_checker)
+tabyl(merged_ID$gps_checker)
+
+victoria_new_ID_gps <- left_join(victoria_merged_filter, merged_ID_gps, by = "interact_id") #merging health/eligibility survey with ID relationships
+
+
+tabyl(victoria_new_ID_gps$gps_checker) #checking to make sure that all of the GPS IDs transferred over correctly. 
+write_csv(victoria_new_ID_gps, "victoria_new_ID_gps.csv") #writing CSV
+```
+
+## Change to updated data frame to run once it gets fixed. Then do another markdown file to run the same analysis for the subset of participants who wore a Sensedoc.
 
 ## Descriptive Statistics 
 ## Age descriptive Statistics for Victoria
@@ -352,7 +420,7 @@ tabyl(victoria_merged_filter$vicroads_f)
 #86% bike on pandora 
 ```
 
-## Self-report Physcial Activity Data - Total PA
+## Self-report Physcial Activity Data - Total PA - Outcome Variable 
 ## Work - Vigorous 
 ```{r}
 victoria_merged_filter <- mutate(victoria_merged_filter, "work_formula" = 8 * work_vigpa * work_vigpa_freq)
@@ -419,5 +487,16 @@ PA_total_plot <- ggplot (data = victoria_merged_filter, aes(total_pa_met_formula
     geom_density() + theme_bw()
     
 plot(PA_total_plot)
+```
+
+##Determining the proportion of cycling PA in total PA
+```{r}
+victoria_merged_filter <- mutate(victoria_merged_filter, "proportion_PA" = (Cycling_formula/total_pa_met_formula)*100)
+tabyl(victoria_merged_filter$proportion_PA)
+
+PA_proportion_plot <- ggplot (data = victoria_merged_filter, aes(proportion_PA)) + 
+    geom_density() + theme_bw()
+    
+plot(PA_proportion_plot)
 ```
 
