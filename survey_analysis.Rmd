@@ -308,6 +308,7 @@ tabyl(victoria_new_ID_gps$marital)
 
 ## Marital Status
 ```{r}
+tabyl(victoria_new_ID_gps$marital)
 marital_plot <- ggplot(data = victoria_new_ID_gps, aes(marital)) +
   geom_bar() +
   labs(title = "Marital Status",
@@ -325,6 +326,7 @@ victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(children_1 = case_when(
   children == 2 ~ "No"
 ))
 tabyl(victoria_new_ID_gps$children_1)
+tabyl(victoria_new_ID_gps$living_children)
 ```
 
 ## Born in Canada
@@ -360,6 +362,7 @@ tabyl(victoria_new_ID_gps$ethnicity)
 
 ## Ethnicity 
 ```{r}
+tabyl(victoria_new_ID_gps$ethnicity)
 ethnicity_plot <- ggplot(data = victoria_new_ID_gps, aes(ethnicity)) +
   geom_bar() +
   labs(title = "Ethnicity",
@@ -765,5 +768,17 @@ tabyl(victoria_gps_only$gps_checker)
 ```{r}
 write_csv(victoria_gps_only, "victoria_gps_only.csv")
 write_csv(victoria_new_ID_gps, "victoria_new_ID_gps.csv")
+```
+
+## Car Access
+```{r}
+tabyl(victoria_new_ID_gps$car_access)
+
+victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(car_access_1 = case_when(
+  car_access == 1 ~ "Yes",
+  car_access == 2 ~ "No"
+))
+tabyl(victoria_new_ID_gps$car_access_1)
+tabyl(victoria_new_ID_gps$cars_household)
 ```
 

@@ -788,3 +788,65 @@ plot(gender_regression_1)
 write.csv(victoria_merged_filter, file = "victoria_merged_filter.csv")
 ```
 
+
+## Spearman's Correlation Coefficient - Gender
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$gender_number, alternative = "less", method = "spearman")
+#not significant - no correlation (4%)
+```
+
+
+## Spearman's Correlation Coefficient - Age
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$age_calculated, alternative = "less", method = "spearman")
+#not significant - no correlation (-3.6%)
+```
+
+## Spearman's Correlation Coefficient - Health Status
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$sf1, alternative = "less", method = "spearman")
+# not significant - no correlation (-.6%)
+```
+
+## Spearman's Correlation Coefficient - Income 
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$income, alternative = "less", method = "spearman")
+# not significant - no correlation (9.6%)
+```
+
+## Spearman's Correlation Coefficient - Marital status
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$marital_status, alternative = "less", method = "spearman")
+# not significant - no correlation (5.7%)
+```
+
+## Spearman's Correlation Coefficient - Ethnicity
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$ethnicity_number, alternative = "less", method = "spearman")
+# not significant - no correlation (.04%)
+```
+
+## Spearman's Correlation Coefficient - Cycling MET-minutes of PA
+```{r}
+cor.test(victoria_merged_filter$support_index, victoria_merged_filter$Cycling_formula, alternative = "less", method = "spearman")
+# significant -12%
+```
+
+## Spearman's Correlation Coefficient - Cycling MET-minutes of PA and comfortable on separated
+```{r}
+cor.test(victoria_merged_filter$separated_bike_lane, victoria_merged_filter$Cycling_formula, alternative = "less", method = "spearman")
+# significant -14%
+```
+## Scatterplot 
+
+## Scatterplot analyzing support index and age 
+```{r}
+scatter_support_age <- ggplot(victoria_merged_filter, aes(support_index, age_calculated))
+
+scatter_support_age_1 <- scatter_support_age +
+                           geom_point() +
+                             labs(title = "Scatterplot of Age and Support Index for AAA",
+                               x = "Support Index for AAA", 
+                                y = "Age")
+plot(scatter_support_age_1)
+```
