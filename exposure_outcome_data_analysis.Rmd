@@ -73,3 +73,27 @@ PA_total_and_cycling <- dplyr::select(victoria_gps_only_merged, "interact_id", "
 write_csv(PA_total_and_cycling, "PA_total_and_cycling.csv")
 ```
 
+## Total hours, number of days and average hours 
+```{r}
+wear_time_stamps <- wear_time_stamps %>% group_by(interact_id) %>% mutate(total_hours = sum(unique_hours))
+
+wear_time_stamps <- wear_time_stamps %>% group_by(interact_id) %>% mutate(number_days = sum(unique_days))
+
+wear_time_stamps <- wear_time_stamps %>% group_by(interact_id) %>% mutate(average_hours = total_hours/number_days)
+
+typeof(wear_time_stamps$interact_id)
+
+summary_wear_stamps  <- dplyr::select(wear_time_stamps, "interact_id", "total_hours", "number_days", "average_hours") #creating a new data frame with just this info
+
+summary_wear_stamps <- summary_wear_stamps %>% distinct(interact_id, .keep_all = TRUE) #removes duplicates
+```
+
+##Summary stats of wear time
+```{r}
+summary(summary_wear_stamps$total_hours)
+summary(summary_wear_stamps$number_days)
+summary(summary_wear_stamps$average_hours)
+
+tabyl(summary_wear_stamps$total_hours)
+```
+

@@ -166,3 +166,44 @@ victoria_gps_only <- victoria_gps_only %>% mutate(car_access_1 = case_when(
 tabyl(victoria_gps_only$car_access_1)
 tabyl(victoria_gps_only$cars_household)
 ```
+
+## Percieved Cycling Safety in Victoria
+```{r}
+victoria_gps_only <- victoria_gps_only %>% mutate(bike_safety_1 = case_when(
+  bike_safety == 1 ~ "Very safe",
+  bike_safety == 2 ~ "Somewhat safe",
+  bike_safety == 3 ~ "Neither safe nor unsafe",
+  bike_safety == 4 ~ "Somewhat dangerous",
+  bike_safety == 5 ~ "Very dangerous",
+))
+tabyl(victoria_gps_only$bike_safety_1)
+
+victoria_gps_only$bike_safety_1 <- factor(victoria_gps_only$bike_safety_1, c( "Very safe", "Somewhat safe", "Neither safe nor unsafe", "Somewhat dangerous", "Very dangerous"))
+tabyl(victoria_gps_only$bike_safety_1)
+```
+
+## Bike frequency by season
+```{r}
+tabyl(victoria_gps_only$bike_freq_a)
+summary(victoria_gps_only$bike_freq_a)
+sd(victoria_gps_only$bike_freq_a)
+tabyl(victoria_gps_only$bike_freq_b)
+summary(victoria_gps_only$bike_freq_b)
+sd(victoria_gps_only$bike_freq_b, na.rm = TRUE)
+tabyl(victoria_gps_only$bike_freq_c)
+summary(victoria_gps_only$bike_freq_c)
+sd(victoria_gps_only$bike_freq_c)
+tabyl(victoria_gps_only$bike_freq_d)
+summary(victoria_gps_only$bike_freq_d)
+sd(victoria_gps_only$bike_freq_d, na.rm = TRUE)
+```
+
+## Cycing infrastructure preference
+```{r}
+tabyl(victoria_gps_only$path_comf)
+tabyl(victoria_gps_only$residential_street_comf)
+tabyl(victoria_gps_only$res_street_traffic_calming_comf)
+tabyl(victoria_gps_only$major_street_no_bike_lane)
+tabyl(victoria_gps_only$major_street_bike_lane)
+```
+

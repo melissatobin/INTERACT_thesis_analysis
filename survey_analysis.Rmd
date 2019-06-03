@@ -501,7 +501,7 @@ victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(major_street_no_bike_lane 
 ))
 
 victoria_new_ID_gps$major_street_no_bike_lane <- factor(victoria_new_ID_gps$major_street_no_bike_lane, c("Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
-tabyl(victoria_new_ID_gps$major_street_no_bike_lane)
+striped 
 ```
 
 ## Bicycle Facility Preference - Major Street with bike lane 
@@ -780,5 +780,66 @@ victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(car_access_1 = case_when(
 ))
 tabyl(victoria_new_ID_gps$car_access_1)
 tabyl(victoria_new_ID_gps$cars_household)
+```
+
+## Percieved Cycling Safety in Victoria
+```{r}
+victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(bike_safety_1 = case_when(
+  bike_safety == 1 ~ "Very safe",
+  bike_safety == 2 ~ "Somewhat safe",
+  bike_safety == 3 ~ "Neither safe nor unsafe",
+  bike_safety == 4 ~ "Somewhat dangerous",
+  bike_safety == 5 ~ "Very dangerous",
+))
+tabyl(victoria_new_ID_gps$bike_safety_1)
+
+victoria_new_ID_gps$bike_safety_1 <- factor(victoria_new_ID_gps$bike_safety_1, c( "Very safe", "Somewhat safe", "Neither safe nor unsafe", "Somewhat dangerous", "Very dangerous"))
+tabyl(victoria_new_ID_gps$bike_safety_1)
+```
+
+## Bike frequency by season
+```{r}
+tabyl(victoria_new_ID_gps$bike_freq_a)
+summary(victoria_new_ID_gps$bike_freq_a)
+sd(victoria_new_ID_gps$bike_freq_a)
+tabyl(victoria_new_ID_gps$bike_freq_b)
+summary(victoria_new_ID_gps$bike_freq_b)
+sd(victoria_new_ID_gps$bike_freq_b, na.rm = TRUE)
+tabyl(victoria_new_ID_gps$bike_freq_c)
+summary(victoria_new_ID_gps$bike_freq_c)
+sd(victoria_new_ID_gps$bike_freq_c)
+tabyl(victoria_new_ID_gps$bike_freq_d)
+summary(victoria_new_ID_gps$bike_freq_d)
+sd(victoria_new_ID_gps$bike_freq_d, na.rm = TRUE)
+```
+
+## Cycling with children
+```{r}
+filter(victoria_new_ID_gps, children_1 == "Yes") %>% tabyl(victoria_new_ID_gps$bike_children) #not sure exactly what I'm trying to do here. 
+```
+
+## Bike More
+```{r}
+tabyl(victoria_new_ID_gps$bike_more)
+```
+
+## Cycling Streets #not sure if this is important
+```{r}
+tabyl(victoria_new_ID_gps$vicroads_a)
+tabyl(victoria_new_ID_gps$vicroads_b)
+tabyl(victoria_new_ID_gps$vicroads_c)
+tabyl(victoria_new_ID_gps$vicroads_d)
+tabyl(victoria_new_ID_gps$vicroads_e)
+tabyl(victoria_new_ID_gps$vicroads_f)
+tabyl(victoria_new_ID_gps$vicroads_g)
+tabyl(victoria_new_ID_gps$vicroads_h)
+tabyl(victoria_new_ID_gps$vicroads_i)
+```
+
+## Belonging to a cycling club
+```{r}
+tabyl(victoria_new_ID_gps$bike_advocacy)
+tabyl(victoria_new_ID_gps$cycling_club)
+#only a small number of participants belonged to the bike advocacy group or a club
 ```
 
