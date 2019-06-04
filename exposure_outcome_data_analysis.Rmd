@@ -44,6 +44,7 @@ library(sp)
 library(sf)
 library(lubridate)
 library(anytime)
+library(stringr)
 ```
 
 ## Reading in data
@@ -144,6 +145,11 @@ colnames(sd_days)[colnames(sd_days) == "Sensedoc ID"] <- "sensedoc_ID"
 #))
 
 sd_days <- separate(sd_days, dates_worn, c("start", "end"), sep = "-")
+
+sd_days_merged <- sd_days_merged %>% dplyr::mutate(year = "2017" + sd_days_merged$start)  
+  
+str_pad(string = "2017", width = 1, side = "left", pad = " ")
+
 sd_days <- date(sd_days$dates_worn)
 date(sd_days$start)
 parse_date_time(sd_days$start, orders = ymd)
