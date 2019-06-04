@@ -42,12 +42,16 @@ library(KernSmooth)
 library(raster)
 library(sp)
 library(sf)
+library(lubridate)
+library(anytime)
 ```
 
 ## Reading in data
 ```{r}
 gps_join_all_percent <- read_csv("gps_join_all_percent.csv")
 wear_time_stamps <- read_csv("wear_time_stamps.csv")
+victoria_gps_only <- read_csv("victoria_gps_only.csv")
+sd_days <- read_csv("all_sds_victoria_phase_1.csv")
 #will need to read in GPS only if not already read in if other files are open
 ```
 
@@ -73,17 +77,36 @@ PA_total_and_cycling <- dplyr::select(victoria_gps_only_merged, "interact_id", "
 write_csv(PA_total_and_cycling, "PA_total_and_cycling.csv")
 ```
 
+## Rename INTERACT ID to GPS ID on the wear_time_stamps file
+```{r}
+colnames(wear_time_stamps)[colnames(wear_time_stamps)== "interact_id"] <- "gps_id" #this is the gps ID not interact ID. Changed name to reflect that
+```
+
+## Merge wear_time_stamps with victoria_gps_only 
+```{r}
+id_only <- dplyr::select(victoria_gps_only_merged, "interact_id", "gps_id", "sensedoc_ID" )
+
+wear_time_stamps_ID <- left_join(wear_time_stamps, id_only, by = "gps_id")
+```
+
+## Merging sd_days with ID's 
+```{r}
+typeof(sd_days$sensedoc_ID)
+typeof(id_only$sensedoc_ID)
+sd_days_merged <- left_join(sd_days, id_only, by = "sensedoc_ID")
+```
+
 ## Total hours, number of days and average hours 
 ```{r}
-wear_time_stamps <- wear_time_stamps %>% group_by(interact_id) %>% mutate(total_hours = sum(unique_hours))
+wear_time_stamps_ID <- wear_time_stamps_ID %>% group_by(interact_id) %>% mutate(total_hours = sum(unique_hours))
 
-wear_time_stamps <- wear_time_stamps %>% group_by(interact_id) %>% mutate(number_days = sum(unique_days))
+wear_time_stamps_ID <- wear_time_stamps_ID %>% group_by(interact_id) %>% mutate(number_days = sum(unique_days))
 
-wear_time_stamps <- wear_time_stamps %>% group_by(interact_id) %>% mutate(average_hours = total_hours/number_days)
+wear_time_stamps_ID <- wear_time_stamps_ID %>% group_by(interact_id) %>% mutate(average_hours = total_hours/number_days)
 
-typeof(wear_time_stamps$interact_id)
+typeof(wear_time_stamps_ID$interact_id)
 
-summary_wear_stamps  <- dplyr::select(wear_time_stamps, "interact_id", "total_hours", "number_days", "average_hours") #creating a new data frame with just this info
+summary_wear_stamps  <- dplyr::select(wear_time_stamps_ID, "interact_id", "total_hours", "number_days", "average_hours") #creating a new data frame with just this info
 
 summary_wear_stamps <- summary_wear_stamps %>% distinct(interact_id, .keep_all = TRUE) #removes duplicates
 ```
@@ -95,5 +118,38 @@ summary(summary_wear_stamps$number_days)
 summary(summary_wear_stamps$average_hours)
 
 tabyl(summary_wear_stamps$total_hours)
+```
+
+## Wear time plots 
+```{r}
+histo_gps_points <- ggplot(wear_time_stamps_ID) + 
+                      geom_histogram(aes(unique_seconds)) + 
+                      geom_vline(xintercept=7500)
+plot(histo_gps_points)
+
+```
+
+## Dealing with SD timestamps
+```{r}
+colnames(sd_days)[colnames(sd_days) == "Dates Worn"] <- "dates_worn"
+colnames(sd_days)[colnames(sd_days) == "Serial #"] <- "serial"
+colnames(sd_days)[colnames(sd_days) == "Sensedoc ID"] <- "sensedoc_ID"
+
+#sd_days <- sd_days %>% mutate(dates_worn = case_when(
+  #dates_worn == "Sept 6-8 & 12-18" ~ "Sept 6-8 - 12-18",
+  #dates_worn == "Sept 11 - 16; 19-24" ~ "Sept 11 - 16 - 19-24",
+  #dates_worn == "Oct14-19 & 21-29" ~ "Oct14-19 - 21-29",
+  #dates_worn == "Oct 24, Nov 14-21" ~ "Oct 24 - Nov 14-21",
+  #dates_worn == "only wore for 5 days & only while biking" ~ "note"
+#))
+
+sd_days <- separate(sd_days, dates_worn, c("start", "end"), sep = "-")
+sd_days <- date(sd_days$dates_worn)
+date(sd_days$start)
+parse_date_time(sd_days$start, orders = ymd)
+
+sd_days <- sd_days %>% mutate(start_1 = anytime::anydate(sd_days$start))
+sd_days <- sd_days %>% mutate(start_2 = ymd(sd_days$start))
+
 ```
 
