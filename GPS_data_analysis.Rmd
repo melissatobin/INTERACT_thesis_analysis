@@ -95,10 +95,43 @@ all_gps_list_project <- lapply(all_gps_list_sf, function(i) {
 save(all_gps_list_project, file = "all_gps_list_project.rda")
 rm(all_gps_list_sf)
 gc()
-#load bikelanes
 
-#bike_lanes <- st_read(dsn ="./Bike_Lanes",layer = "Bike_Lanes.shp") #potentially just pandora
-#this didn't work
+load("all_gps_list_project.rda")
+doy_start_end_filtered <- fread("doy_start_end_filtered.csv")
+doy_start_end_filtered_1 <- dplyr::select(doy_start_end_filtered, "interact_id", "gps_id", "doy_start", "doy_end", "unique_seconds")
+
+all_gps_list_project_1 <- lapply(all_gps_list_project, function(i){
+  i %>% mutate(doy_1 = lubridate::yday(utcdate))
+})
+
+rm(all_gps_list_project)
+gc()
+
+all_gps_list_project_2 <- lapply(all_gps_list_project_1, function(i){
+  i %>% mutate(gps_id = interact_id)
+})
+
+rm(all_gps_list_project_1)
+gc()
+
+gps_time_stamps <- lapply(all_gps_list_project_2, function(i){
+  i %>% left_join(doy_start_end_filtered_1, by = "gps_id")
+})
+
+rm(all_gps_list_project_2)
+gc()
+
+gps_time_stamps_filtered <- lapply(gps_time_stamps, function(i){
+  i %>% group_by(gps_id, doy_1) %>% filter(doy_1 >= doy_start) %>% filter(doy_1 <= doy_end) %>%    filter(unique_seconds > 7500)
+})
+
+save(gps_time_stamps_filtered, file = "gps_time_stamps_filtered.rda")
+
+load("gps_time_stamps_filtered.rda")
+
+rm(gps_time_stamps)
+gc()
+#load bikelanes
 
 bike_lanes_1 <-
   st_read("./Bike_Lanes/Bike_Lanes.shp") #this worked instead
@@ -108,12 +141,12 @@ plot(pandora)
 pandora <- st_transform(pandora, 26910)
 
 pandora_buffer <- st_buffer(pandora, dist = 200)
-#fwrite(pandora_buffer, "pandora_buffer.csv", sep = ",")
+
 save(pandora_buffer, file = "pandora_buffer.rda")
 
 #for each gps trace, count the number of points within the 200m pandora buffer
 
-join_gps_to_buffer <- lapply(all_gps_list_project, function(i) {
+join_gps_to_buffer <- lapply(gps_time_stamps_filtered, function(i) {
   i %>%
     st_join(pandora_buffer)
 })
@@ -127,39 +160,49 @@ filter_gps_in_buffer <- lapply(join_gps_to_buffer, function(i) {
 #join_gps_to_buffer <- NULL
 gc()
 #takes the total number of GPS points for each participant and groups by INTERACT ID
-gps_join_1 <- lapply(all_gps_list_project, function(i) {
-  i %>%
-    group_by(interact_id) %>%
-    summarise(n = n()) %>%
-    as_tibble()
-}) #THIS WORKS!!!!
-#fwrite(gps_join_1, "gps_join_1.csv", sep = ",")
-save(gps_join_1, file = "gps_join_1.rda")
+```
 
+```{r}
+gps_join_1 <- lapply(gps_time_stamps_filtered, function(i) {
+  i %>%
+    group_by(interact_id.y) %>%
+    dplyr::summarise(n = n()) %>%
+    as_tibble()
+})
+#THIS WORKS!!!!
+
+save(gps_join_1, file = "gps_join_1.rda")
+load("gps_join_1.rda")
 
 #takes the total number of GPS points that touch pandora buffer for each participant and groups by INTERACT ID
 gps_join_2 <- lapply(filter_gps_in_buffer, function(i) {
   i %>%
-    group_by(interact_id) %>% summarise(n = n()) %>% as_tibble()
+    group_by(interact_id.y) %>% 
+    dplyr::summarise(n = n()) %>% as_tibble()
 })
 
+save(gps_join_2, file = "gps_join_2.rda")
 filter_gps_in_buffer <- NULL
 gc()
+
+
 #joining total points (n.x.) with intersections with pandora (n.y)
 gps_join_all <-
   gps_join_1 %>% bind_rows() %>% left_join((gps_join_2 %>% bind_rows()), by =
-                                             "interact_id")
+                                             "interact_id.y")
 save(gps_join_all, file = "gps_join_all.rda")
 ##Can't figure out a way to change the NA to zero. I tried fill = 0
 
 gps_join_all_select <-
-  select_(gps_join_all, "interact_id", "n.x", "n.y")
+  select_(gps_join_all, "interact_id.y", "n.x", "n.y")
 
 gps_join_all_amount <- mutate(gps_join_all_select, amount = n.y / n.x)
 
 gps_join_all_percent <-
   mutate(gps_join_all_amount, percent = amount * 100)
-save(gps_join_all_percent, file = "gps_join_all_percent.rda")
+
+write_csv(gps_join_all_percent, "gps_join_all_percent.csv")
+#save(gps_join_all_percent, file = "gps_join_all_percent.rda")
 #Next steps
 #1. fill NA with 0
 #2. remove geometry x and y to help with the speed - done
@@ -174,8 +217,8 @@ save(gps_join_all_percent, file = "gps_join_all_percent.rda")
 ## Check number of days and hours for each participant
 ```{r}
 #this gives total number of days, seconds and hours and gives an average of hours per day collected
-gps_wear_time_overall <- lapply(all_gps_list_project,function(i) {
-  i %>% group_by(interact_id) %>% 
+gps_wear_time_overall <- lapply(gps_time_stamps_filtered,function(i) {
+  i %>% group_by(interact_id.y) %>% 
     mutate(doy = yday(utcdate)#,
            ) %>% 
     summarise(unique_days = length(unique(doy)),
@@ -184,8 +227,8 @@ gps_wear_time_overall <- lapply(all_gps_list_project,function(i) {
          hours_per_day = unique_hours/unique_days
          )})
 #this gives actual total number of hours per day 
-gps_wear_time_by_day_unique_time_stamps <- lapply(all_gps_list_project,function(i) {
-  i %>% group_by(interact_id) %>% 
+gps_wear_time_by_day_unique_time_stamps <- lapply(gps_time_stamps_filtered,function(i) {
+  i %>% group_by(interact_id.y) %>% 
     mutate(doy = yday(utcdate)#,
            ) %>% 
     group_by(doy) %>%
@@ -194,17 +237,17 @@ gps_wear_time_by_day_unique_time_stamps <- lapply(all_gps_list_project,function(
   mutate(unique_hours = unique_seconds/60/60,
          hours_per_day = unique_hours/unique_days
          )})
-save(gps_wear_time_by_day_unique_time_stamps, file = "gps_wear_time_by_day_unique_time_stamps.rda")
+save(gps_wear_time_by_day_unique_time_stamps, file = "gps_wear_time_by_day_unique_time_stamps_updated.rda")
 #this gives the time of day that participants wore as well as total time per day
 
-load("all_gps_list_project.rda")
 
-gps_wear_time_by_day_min_max_time_stamps <- lapply(all_gps_list_project, function(i) {
-  i %>% group_by(interact_id) %>% 
+
+gps_wear_time_by_day_min_max_time_stamps <- lapply(gps_time_stamps_filtered, function(i) {
+  i %>% group_by(interact_id.y) %>% 
     mutate(doy = yday(utcdate)
            ) %>% 
-    group_by(doy) %>%
-    summarise(interact_id = interact_id,
+    group_by(doy)%>%
+    dplyr::summarise(interact_id.y = mean(interact_id.y),
               unique_days = length(unique(doy)),
               unique_seconds = length(unique(utcdate)),
               n_traces = n(),
@@ -216,10 +259,11 @@ gps_wear_time_by_day_min_max_time_stamps <- lapply(all_gps_list_project, functio
            hours_per_day = unique_hours/unique_days)})
 
 
-#save(gps_wear_time_by_day_min_max_time_stamps, file = "gps_wear_time_by_day_min_max_time_stamps.rda")
+#save(gps_wear_time_by_day_min_max_time_stamps, file = "gps_wear_time_by_day_min_max_time_stamps_updated.rda")
+
 wear_time_stamps <- do.call(rbind, lapply(gps_wear_time_by_day_min_max_time_stamps, function(x) as.data.frame(x)))
 wear_time_stamps$geometry <- NULL
-fwrite(wear_time_stamps, "wear_time_stamps.csv", sep = ",", showProgress = T)
+fwrite(wear_time_stamps, "wear_time_stamps_updated.csv", sep = ",", showProgress = T)
 
 ```
 

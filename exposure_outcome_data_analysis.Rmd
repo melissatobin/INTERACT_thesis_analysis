@@ -22,7 +22,6 @@ setwd(path)
 
 ## Loading Packages
 ```{r}
-install.packages("lmtest")
 library(lmtest)
 library(tidyverse)
 library(ggplot2)
@@ -45,6 +44,7 @@ library(sf)
 library(lubridate)
 library(anytime)
 library(stringr)
+library(stringi)
 ```
 
 ## Reading in data
@@ -92,8 +92,10 @@ wear_time_stamps_ID <- left_join(wear_time_stamps, id_only, by = "gps_id")
 
 ## Merging sd_days with ID's 
 ```{r}
-typeof(sd_days$sensedoc_ID)
-typeof(id_only$sensedoc_ID)
+colnames(sd_days)[colnames(sd_days) == "Dates Worn"] <- "dates_worn"
+colnames(sd_days)[colnames(sd_days) == "Serial #"] <- "serial"
+colnames(sd_days)[colnames(sd_days) == "Sensedoc ID"] <- "sensedoc_ID"
+
 sd_days_merged <- left_join(sd_days, id_only, by = "sensedoc_ID")
 ```
 
@@ -132,30 +134,51 @@ plot(histo_gps_points)
 
 ## Dealing with SD timestamps
 ```{r}
-colnames(sd_days)[colnames(sd_days) == "Dates Worn"] <- "dates_worn"
-colnames(sd_days)[colnames(sd_days) == "Serial #"] <- "serial"
-colnames(sd_days)[colnames(sd_days) == "Sensedoc ID"] <- "sensedoc_ID"
+sd_days_merged <- separate(sd_days_merged, dates_worn, c("start", "end"), sep = "-")
 
-#sd_days <- sd_days %>% mutate(dates_worn = case_when(
-  #dates_worn == "Sept 6-8 & 12-18" ~ "Sept 6-8 - 12-18",
-  #dates_worn == "Sept 11 - 16; 19-24" ~ "Sept 11 - 16 - 19-24",
-  #dates_worn == "Oct14-19 & 21-29" ~ "Oct14-19 - 21-29",
-  #dates_worn == "Oct 24, Nov 14-21" ~ "Oct 24 - Nov 14-21",
-  #dates_worn == "only wore for 5 days & only while biking" ~ "note"
-#))
+sd_days_merged <- sd_days_merged %>% dplyr::mutate(year = "2017") 
+                             
 
-sd_days <- separate(sd_days, dates_worn, c("start", "end"), sep = "-")
+sd_days_merged$start_recode <- stri_join(sd_days_merged$start, sd_days_merged$year, sep = " ", collapse = NULL, ignore_null = FALSE)
 
-sd_days_merged <- sd_days_merged %>% dplyr::mutate(year = "2017" + sd_days_merged$start)  
-  
-str_pad(string = "2017", width = 1, side = "left", pad = " ")
+sd_days_merged$end_recode <- stri_join(sd_days_merged$end, sd_days_merged$year, sep = " ", collapse = NULL, ignore_null = FALSE)
 
-sd_days <- date(sd_days$dates_worn)
-date(sd_days$start)
-parse_date_time(sd_days$start, orders = ymd)
+sd_days_merged_1 <- read_csv("sd_days_merged_fixed.csv")
 
-sd_days <- sd_days %>% mutate(start_1 = anytime::anydate(sd_days$start))
-sd_days <- sd_days %>% mutate(start_2 = ymd(sd_days$start))
+sd_days_merged_1$start_year <- mdy(sd_days_merged_1$start_recode)
 
+sd_days_merged_1$end_year <- mdy(sd_days_merged_1$end_recode)
+
+
+sd_days_merged_1 <- sd_days_merged_1 %>% mutate(doy_start = yday(start_year))
+
+sd_days_merged_1 <- sd_days_merged_1 %>% mutate(doy_end = yday(end_year))
+
+sd_days_merged_2 <- filter(sd_days_merged_1, interact_id > 1)
+
+sd_doy <- dplyr::select(sd_days_merged_1, "sensedoc_ID", "interact_id", "doy_start", "doy_end")
+
+wear_time_stamps_merged <- left_join(wear_time_stamps_ID, sd_doy, by = "sensedoc_ID")
+```
+
+## Filter for correct days of participants 
+```{r}
+filtered_time_stamps <- wear_time_stamps_merged %>% group_by(interact_id.x)  %>% filter(doy >= doy_start) %>% filter(doy <= doy_end) %>% filter(unique_seconds > 7500)
+
+write_csv(filtered_time_stamps, "filtered_time_stamps.csv")
+```
+
+```{r}
+filtered_time_stamps <- read_csv("filtered_time_stamps.csv")
+
+colnames(filtered_time_stamps)[colnames(filtered_time_stamps)== "interact_id.x"] <- "interact_id"
+
+doy_start_end <- dplyr::select(filtered_time_stamps, "interact_id", "gps_id", "doy", "doy_start", "doy_end", "unique_seconds")
+
+doy_start_end_filtered <- dplyr::select(doy_start_end, "interact_id", "gps_id", "doy_start", "doy_end", "unique_seconds")
+
+doy_start_end_filtered <- doy_start_end %>% distinct(interact_id, .keep_all = TRUE) #removes duplicates
+
+write_csv(doy_start_end_filtered, "doy_start_end_filtered.csv")
 ```
 

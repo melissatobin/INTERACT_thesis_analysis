@@ -23,7 +23,6 @@ setwd(path)
 
 ## Loading Packages
 ```{r}
-install.packages("lmtest")
 library(lmtest)
 library(tidyverse)
 library(ggplot2)
@@ -65,7 +64,7 @@ victoria_merged_filter <- filter(victoria_merged, transp_bikes_adults >= 0) #fil
 ```{r}
 ID_relationship <- read_csv("Victoria participation_wave1_IDrelationship.csv") #this is the file from Karen with the INTERACT ID's that she created
 
-gps_ID_relationship <- read_csv("pairings_with_sdid.csv") #this is the other file with the "INTERACT ID's" that are actually GPS IDs
+gps_ID_relationship <- read_csv("pairings_with_sdid_updated.csv") #this is the other file with the "INTERACT ID's" that are actually GPS IDs
 tabyl(gps_ID_relationship$sensedoc_id)
 ```
 
