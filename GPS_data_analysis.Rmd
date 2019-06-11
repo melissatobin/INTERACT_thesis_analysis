@@ -123,14 +123,33 @@ gc()
 
 gps_time_stamps_filtered <- lapply(gps_time_stamps, function(i){
   i %>% group_by(gps_id, doy_1) %>% filter(doy_1 >= doy_start) %>% filter(doy_1 <= doy_end) %>%    filter(unique_seconds > 7500)
-})
+}) #filtering to get the correct number of days and then filtering for number of points per day (doesn't completely work - days work but unique seconds doesn't
 
 save(gps_time_stamps_filtered, file = "gps_time_stamps_filtered.rda")
 
 load("gps_time_stamps_filtered.rda")
 
-rm(gps_time_stamps)
+gps_time_stamps_filtered_1 <- lapply(gps_time_stamps_filtered, function(i){
+  i %>% mutate(n_points = 1)
+}) #adding a point to each row to allow for sum of points per day to filter again
+
+rm(gps_time_stamps_filtered_1)
+
+gps_time_stamps_filtered_2 <- lapply(gps_time_stamps_filtered_1, function(i){
+  i %>% group_by(interact_id.y, doy_1) %>%
+   dplyr::mutate(day_points = sum(n_points))
+}) #grouping by interact ID and then day and then summing by points per day
+
+gps_time_stamps_filtered_3 <- lapply(gps_time_stamps_filtered_2, function(i){
+  i %>% filter(day_points > 7500)
+}) #filtering entire data frame for points greater than 7500. 
+#this worked. 
+
+save(gps_time_stamps_filtered_3, file = "gps_time_stamps_filtered_3.rda")
+
+rm(gps_time_stamps_filtered_2)
 gc()
+
 #load bikelanes
 
 bike_lanes_1 <-
@@ -146,7 +165,7 @@ save(pandora_buffer, file = "pandora_buffer.rda")
 
 #for each gps trace, count the number of points within the 200m pandora buffer
 
-join_gps_to_buffer <- lapply(gps_time_stamps_filtered, function(i) {
+join_gps_to_buffer <- lapply(gps_time_stamps_filtered_3, function(i) {
   i %>%
     st_join(pandora_buffer)
 })
@@ -163,7 +182,7 @@ gc()
 ```
 
 ```{r}
-gps_join_1 <- lapply(gps_time_stamps_filtered, function(i) {
+gps_join_1 <- lapply(gps_time_stamps_filtered_3, function(i) {
   i %>%
     group_by(interact_id.y) %>%
     dplyr::summarise(n = n()) %>%
@@ -194,14 +213,14 @@ save(gps_join_all, file = "gps_join_all.rda")
 ##Can't figure out a way to change the NA to zero. I tried fill = 0
 
 gps_join_all_select <-
-  select_(gps_join_all, "interact_id.y", "n.x", "n.y")
+  dplyr::select(gps_join_all, "interact_id.y", "n.x", "n.y")
 
 gps_join_all_amount <- mutate(gps_join_all_select, amount = n.y / n.x)
 
-gps_join_all_percent <-
+gps_join_all_percent_updated <-
   mutate(gps_join_all_amount, percent = amount * 100)
 
-write_csv(gps_join_all_percent, "gps_join_all_percent.csv")
+write_csv(gps_join_all_percent_updated, "gps_join_all_percent_updated.csv")
 #save(gps_join_all_percent, file = "gps_join_all_percent.rda")
 #Next steps
 #1. fill NA with 0
@@ -227,7 +246,7 @@ gps_wear_time_overall <- lapply(gps_time_stamps_filtered,function(i) {
          hours_per_day = unique_hours/unique_days
          )})
 #this gives actual total number of hours per day 
-gps_wear_time_by_day_unique_time_stamps <- lapply(gps_time_stamps_filtered,function(i) {
+gps_wear_time_by_day_unique_time_stamps_1 <- lapply(gps_time_stamps_filtered_3,function(i) {
   i %>% group_by(interact_id.y) %>% 
     mutate(doy = yday(utcdate)#,
            ) %>% 
@@ -237,12 +256,12 @@ gps_wear_time_by_day_unique_time_stamps <- lapply(gps_time_stamps_filtered,funct
   mutate(unique_hours = unique_seconds/60/60,
          hours_per_day = unique_hours/unique_days
          )})
-save(gps_wear_time_by_day_unique_time_stamps, file = "gps_wear_time_by_day_unique_time_stamps_updated.rda")
+save(gps_wear_time_by_day_unique_time_stamps_1, file = "gps_wear_time_by_day_unique_time_stamps_updated_final.rda")
 #this gives the time of day that participants wore as well as total time per day
 
 
 
-gps_wear_time_by_day_min_max_time_stamps <- lapply(gps_time_stamps_filtered, function(i) {
+gps_wear_time_by_day_min_max_time_stamps <- lapply(gps_time_stamps_filtered_3, function(i) {
   i %>% group_by(interact_id.y) %>% 
     mutate(doy = yday(utcdate)
            ) %>% 
@@ -265,5 +284,29 @@ wear_time_stamps <- do.call(rbind, lapply(gps_wear_time_by_day_min_max_time_stam
 wear_time_stamps$geometry <- NULL
 fwrite(wear_time_stamps, "wear_time_stamps_updated.csv", sep = ",", showProgress = T)
 
+```
+
+##Checking to see if the new filtered file works before running the rest of the data
+```{r}
+
+gps_wear_time_by_day_min_max_time_stamps_1 <- lapply(gps_time_stamps_filtered_3, function(i) {
+  i %>% group_by(interact_id.y) %>% 
+    mutate(doy = yday(utcdate)
+           ) %>% 
+    group_by(doy)%>%
+    dplyr::summarise(interact_id.y = mean(interact_id.y),
+              unique_days = length(unique(doy)),
+              unique_seconds = length(unique(utcdate)),
+              n_traces = n(),
+              min_time = min(utcdate),
+              max_time = max(utcdate)
+              ) %>% 
+    mutate(total_time = (as.POSIXct(max_time) - as.POSIXct(min_time)),
+           unique_hours = unique_seconds/60/60,
+           hours_per_day = unique_hours/unique_days)})
+
+wear_time_stamps_filtered <- do.call(rbind, lapply(gps_wear_time_by_day_min_max_time_stamps_1, function(x) as.data.frame(x)))
+wear_time_stamps_filtered$geometry <- NULL
+fwrite(wear_time_stamps_filtered, "wear_time_stamps_updated_final.csv", sep = ",", showProgress = T)
 ```
 

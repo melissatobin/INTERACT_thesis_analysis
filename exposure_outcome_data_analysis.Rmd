@@ -125,20 +125,29 @@ tabyl(summary_wear_stamps$total_hours)
 
 ## Wear time plots 
 ```{r}
-histo_gps_points <- ggplot(wear_time_stamps_ID) + 
+histo_gps_points <- ggplot(wear_time_stamps) + 
                       geom_histogram(aes(unique_seconds)) + 
                       geom_vline(xintercept=7500)
 plot(histo_gps_points)
 
 ```
 
-## Dealing with SD timestamps
+## New time stamps 
+
+```{r}
+wear_time_stamps_updated <- read_csv("wear_time_stamps_updated.csv")
+histo_gps_points_updated <- ggplot(wear_time_stamps_updated) + 
+                      geom_histogram(aes(unique_seconds)) + 
+                      geom_vline(xintercept=7500)
+plot(histo_gps_points_updated)
+```
+
+## Dealing with SD timestampes
 ```{r}
 sd_days_merged <- separate(sd_days_merged, dates_worn, c("start", "end"), sep = "-")
 
 sd_days_merged <- sd_days_merged %>% dplyr::mutate(year = "2017") 
                              
-
 sd_days_merged$start_recode <- stri_join(sd_days_merged$start, sd_days_merged$year, sep = " ", collapse = NULL, ignore_null = FALSE)
 
 sd_days_merged$end_recode <- stri_join(sd_days_merged$end, sd_days_merged$year, sep = " ", collapse = NULL, ignore_null = FALSE)
@@ -180,5 +189,12 @@ doy_start_end_filtered <- dplyr::select(doy_start_end, "interact_id", "gps_id", 
 doy_start_end_filtered <- doy_start_end %>% distinct(interact_id, .keep_all = TRUE) #removes duplicates
 
 write_csv(doy_start_end_filtered, "doy_start_end_filtered.csv")
+
+doy_start_end_filtered <- read_csv("doy_start_end_filtered.csv")
+```
+
+
+```{r}
+wear_time_stamps_updated_1 <- wear_time_stamps_updated %>% filter(unique_seconds > 7500)
 ```
 
