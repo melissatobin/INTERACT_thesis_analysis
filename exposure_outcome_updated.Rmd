@@ -1,0 +1,101 @@
+---
+title: "exposure_outcome_updated"
+author: "Melissa Tobin"
+date: "11/06/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+```
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+library(lubridate)
+library(anytime)
+library(stringr)
+library(stringi)
+```
+
+## Reading in Data to make sure timestamps code was right
+```{r}
+wear_time_stamps_updated_final <- read_csv("wear_time_stamps_updated_final.csv")
+wear_time_stamps <- read_csv("wear_time_stamps.csv")
+wear_time_stamps_updated <- read_csv("wear_time_stamps_updated.csv")
+##everything looks great
+```
+
+## Wear time plots 
+```{r}
+histo_gps_points_updated <- ggplot(wear_time_stamps_updated_final) + 
+                      geom_histogram(aes(unique_seconds)) + 
+                      geom_vline(xintercept=7500)
+plot(histo_gps_points_updated)
+
+##plot is correct. No GPS days under 7500
+```
+
+
+## Reading in other data
+```{r}
+gps_join_all_percent_updated <- read_csv("gps_join_all_percent_updated.csv")
+victoria_gps_only <- read_csv("victoria_gps_only.csv")
+sd_days <- read_csv("all_sds_victoria_phase_1.csv")
+```
+
+## Rename INTERACT ID to GPS ID
+```{r}
+colnames(gps_join_all_percent_updated)[colnames(gps_join_all_percent_updated)== "interact_id.y"] <- "interact_id" #changing to interact_id to help make joining easier later
+gps_join_all_percent_updated[is.na(gps_join_all_percent_updated <- gps_join_all_percent_updated)] <- 0 #converted NA's to zero to make merging easier. 
+
+colnames(gps_join_all_percent_updated)[colnames(gps_join_all_percent_updated)== "n.x"] <- "total_points" 
+
+colnames(gps_join_all_percent_updated)[colnames(gps_join_all_percent_updated)== "n.y"] <- "exposure_points" 
+```
+
+## Merge gps_join_all_percent_updated with victoria_gps_only 
+```{r}
+gps_join_all_percent_updated[, "interact_id"] <- apply(gps_join_all_percent_updated[, "interact_id"], 1, function(x) as.integer(x))
+victoria_gps_only[, "interact_id"] <- apply(victoria_gps_only[, "interact_id"], 1, function(x) as.integer(x))
+#converting to integar first so both interact_id are using the same data format
+
+victoria_gps_only_merged <- left_join(victoria_gps_only, gps_join_all_percent_updated, by = "interact_id") #successfully merged 
+```
+
+## Connect PA total and cycling PA with exposure data
+```{r}
+PA_total_and_cycling <- dplyr::select(victoria_gps_only_merged, "interact_id", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent")
+
+write_csv(PA_total_and_cycling, "PA_total_and_cycling.csv")
+```
+
+
