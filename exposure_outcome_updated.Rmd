@@ -52,6 +52,23 @@ wear_time_stamps_updated_final <- read_csv("wear_time_stamps_updated_final.csv")
 wear_time_stamps <- read_csv("wear_time_stamps.csv")
 wear_time_stamps_updated <- read_csv("wear_time_stamps_updated.csv")
 ##everything looks great
+
+colnames(wear_time_stamps_updated_final)[colnames(wear_time_stamps_updated_final)== "interact_id.y"] <- "interact_id"
+```
+
+## Total hours, number of days and average hours 
+```{r}
+wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(total_hours = sum(unique_hours))
+
+wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(number_days = sum(unique_days))
+
+wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(average_hours = total_hours/number_days)
+
+summary_wear_stamps  <- dplyr::select(wear_time_stamps_updated_final, "interact_id", "total_hours", "number_days", "average_hours") #creating a new data frame with just this info
+
+summary_wear_stamps <- summary_wear_stamps %>% distinct(interact_id, .keep_all = TRUE) #removes duplicates
+
+write_csv(summary_wear_stamps, "summary_wear_stamps.csv")
 ```
 
 ## Wear time plots 
@@ -63,7 +80,6 @@ plot(histo_gps_points_updated)
 
 ##plot is correct. No GPS days under 7500
 ```
-
 
 ## Reading in other data
 ```{r}
@@ -91,11 +107,39 @@ victoria_gps_only[, "interact_id"] <- apply(victoria_gps_only[, "interact_id"], 
 victoria_gps_only_merged <- left_join(victoria_gps_only, gps_join_all_percent_updated, by = "interact_id") #successfully merged 
 ```
 
+##Filtering for participants who GPS data isn't valid
+```{r}
+victoria_gps_only_merged_updated <- victoria_gps_only_merged %>% filter(total_points >= 0)
+
+write_csv(victoria_gps_only_merged_updated, "victoria_gps_only_merged_updated.csv")
+```
+
 ## Connect PA total and cycling PA with exposure data
 ```{r}
-PA_total_and_cycling <- dplyr::select(victoria_gps_only_merged, "interact_id", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent")
+PA_total_and_cycling <- dplyr::select(victoria_gps_only_merged_updated, "interact_id", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent")
 
 write_csv(PA_total_and_cycling, "PA_total_and_cycling.csv")
 ```
 
+##Plotting exposure 
+```{r}
+exposure_plot <- ggplot(PA_total_and_cycling) + 
+                      geom_histogram(aes(percent), binwidth = 2)
+                
+plot(exposure_plot)
+
+tabyl(PA_total_and_cycling$percent)
+```
+
+```{r}
+Pa_total_plot <- ggplot(PA_total_and_cycling) + 
+                      geom_histogram(aes(total_pa_met_formula))
+                
+plot(Pa_total_plot)
+
+cycling_plot <- ggplot(PA_total_and_cycling) + 
+                      geom_histogram(aes(Cycling_formula))
+                
+plot(cycling_plot)
+```
 
