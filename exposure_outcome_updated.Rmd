@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+chooseCRANmirror(graphics = FALSE, ind = 1)
 
 OS <- Sys.info()
 if (OS["sysname"] == "Windows") {
@@ -44,6 +45,7 @@ library(lubridate)
 library(anytime)
 library(stringr)
 library(stringi)
+library(finalfit)
 ```
 
 ## Reading in Data to make sure timestamps code was right
@@ -56,6 +58,16 @@ wear_time_stamps_updated <- read_csv("wear_time_stamps_updated.csv")
 colnames(wear_time_stamps_updated_final)[colnames(wear_time_stamps_updated_final)== "interact_id.y"] <- "interact_id"
 ```
 
+## Reading in other data
+```{r}
+gps_join_all_percent_updated <- read_csv("gps_join_all_percent_updated.csv")
+victoria_gps_only <- read_csv("victoria_gps_only.csv")
+sd_days <- read_csv("all_sds_victoria_phase_1.csv")
+weather_data <- read_csv("weather_data_1.csv")
+doy_start_end_filtered <- read_csv("doy_start_end_filtered.csv")
+```
+
+
 ## Total hours, number of days and average hours 
 ```{r}
 wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(total_hours = sum(unique_hours))
@@ -63,8 +75,24 @@ wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(in
 wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(number_days = sum(unique_days))
 
 wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(average_hours = total_hours/number_days)
+```
 
-summary_wear_stamps  <- dplyr::select(wear_time_stamps_updated_final, "interact_id", "total_hours", "number_days", "average_hours") #creating a new data frame with just this info
+## Weather data
+```{r}
+weather_data_updated <- weather_data %>% dplyr::select("Date/Time", "Year", "Month", "Day", "Mean Temp", "Total Precip (mm)")
+
+weather_data_updated <- weather_data_updated %>% mutate(doy = lubridate::yday(`Date/Time`))
+
+colnames(weather_data_updated)[colnames(weather_data_updated)== "Mean Temp"] <- "mean_temp"
+colnames(weather_data_updated)[colnames(weather_data_updated)== "Total Precip (mm)"] <- "total_precip"
+
+weather_time_stamps_1 <- left_join(wear_time_stamps_updated_final, weather_data_updated, by = "doy")
+
+weather_time_stamps_2 <- weather_time_stamps_1 %>% group_by(interact_id) %>%
+  mutate(mean_temp_date = mean(mean_temp, na.rm = TRUE),
+           total_precip_date = sum(total_precip, na.rm = TRUE))
+
+summary_wear_stamps  <- dplyr::select(weather_time_stamps_2, "interact_id", "total_hours", "number_days", "average_hours", "mean_temp_date", "total_precip_date") #creating a new data frame with just this info. Includes wear stamps and weather data
 
 summary_wear_stamps <- summary_wear_stamps %>% distinct(interact_id, .keep_all = TRUE) #removes duplicates
 
@@ -81,14 +109,8 @@ plot(histo_gps_points_updated)
 ##plot is correct. No GPS days under 7500
 ```
 
-## Reading in other data
-```{r}
-gps_join_all_percent_updated <- read_csv("gps_join_all_percent_updated.csv")
-victoria_gps_only <- read_csv("victoria_gps_only.csv")
-sd_days <- read_csv("all_sds_victoria_phase_1.csv")
-```
 
-## Rename INTERACT ID to GPS ID
+## Renaming columns in exposure file and filtering for NA
 ```{r}
 colnames(gps_join_all_percent_updated)[colnames(gps_join_all_percent_updated)== "interact_id.y"] <- "interact_id" #changing to interact_id to help make joining easier later
 gps_join_all_percent_updated[is.na(gps_join_all_percent_updated <- gps_join_all_percent_updated)] <- 0 #converted NA's to zero to make merging easier. 
@@ -105,6 +127,13 @@ victoria_gps_only[, "interact_id"] <- apply(victoria_gps_only[, "interact_id"], 
 #converting to integar first so both interact_id are using the same data format
 
 victoria_gps_only_merged <- left_join(victoria_gps_only, gps_join_all_percent_updated, by = "interact_id") #successfully merged 
+```
+
+## Recoding PA total and cycling PA for outlier 
+```{r}
+victoria_gps_only_merged$total_pa_met_formula[victoria_gps_only_merged$total_pa_met_formula == 29622.0] <- 22309
+tabyl(victoria_gps_only_merged$Cycling_formula)
+victoria_gps_only_merged$Cycling_formula[victoria_gps_only_merged$Cycling_formula == 10080] <- 7561
 ```
 
 ##Filtering for participants who GPS data isn't valid
@@ -131,15 +160,59 @@ plot(exposure_plot)
 tabyl(PA_total_and_cycling$percent)
 ```
 
+## Plotting outcome 
 ```{r}
-Pa_total_plot <- ggplot(PA_total_and_cycling) + 
+pa_total_plot <- ggplot(PA_total_and_cycling) + 
                       geom_histogram(aes(total_pa_met_formula))
                 
-plot(Pa_total_plot)
+plot(pa_total_plot)
 
 cycling_plot <- ggplot(PA_total_and_cycling) + 
                       geom_histogram(aes(Cycling_formula))
                 
 plot(cycling_plot)
+```
+
+## Filtering for file with just SD Days 
+```{r}
+doy_start_end_final <- doy_start_end_filtered %>% dplyr::select("interact_id", "gps_id", "doy_start", "doy_end")
+
+victoria_gps_only_merged_updated_1 <- left_join(victoria_gps_only_merged_updated, doy_start_end_final, by = "interact_id")
+write_csv(victoria_gps_only_merged_updated_1, "victoria_gps_only_merged_updated_1.csv")
+```
+
+
+## Reducing Data frame into a more manageable file
+```{r}
+victoria_small <- victoria_gps_only_merged_updated_1 %>% dplyr::select("interact_id", "sensedoc_ID", "ethica_ID", "gps_id.x", "residence_cp", "age_calculated", "age_categories", "gender", "health_status", "marital", "income_1", "income_2", "income_satisfy", "ethnicity", "born_canada", "children_1", "car_access", "transp_bikes_adults", "bike_safety",  "bike_freq_a", "bike_freq_b", "bike_freq_c", "bike_freq_d", "path_comf", "residential_street_comf", "res_street_traffic_calming_comf", "major_street_no_bike_lane", "major_street_bike_lane", "major_street_separated_bike_lane", "aaa_familiarity_1", "aaa_idea_1", "aaa_bike_more_1", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent", "doy_start", "doy_end")
+
+write_csv(victoria_small, "victoria_small.csv")
+
+##merging summary time stamps with victoria small
+
+victoria_small_merged <- left_join(victoria_small, summary_wear_stamps, by = "interact_id")
+```
+
+## Models
+```{r}
+regression_1 <- lm(total_pa_met_formula ~ percent, data = victoria_small_merged)
+
+summary(regression_1)
+lm.beta(regression_1) ##This isn't working. 
+confint(regression_1)
+#plot(regression_1)
+```
+
+## Trying final fit
+```{r}
+explanatory = c("percent", "age_categories")
+dependent = "total_pa_met_formula"
+victoria_small_merged %>% finalfit(dependent, explanatory)
+knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) #not sure what this does but copied anyways from the explanation 
+typeof(victoria_small_merged$income_2)
+
+typeof(victoria_small_merged$gender)
+typeof(victoria_small_merged$age_categories)
+tabyl(victoria_small_merged$age_categories)
 ```
 
