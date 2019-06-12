@@ -191,6 +191,8 @@ write_csv(victoria_small, "victoria_small.csv")
 ##merging summary time stamps with victoria small
 
 victoria_small_merged <- left_join(victoria_small, summary_wear_stamps, by = "interact_id")
+
+write_csv(victoria_small_merged, "victoria_small_merged.csv")
 ```
 
 ## Models
