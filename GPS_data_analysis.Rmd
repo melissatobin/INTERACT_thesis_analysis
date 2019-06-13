@@ -310,3 +310,34 @@ wear_time_stamps_filtered$geometry <- NULL
 fwrite(wear_time_stamps_filtered, "wear_time_stamps_updated_final.csv", sep = ",", showProgress = T)
 ```
 
+## Reading in table of power
+```{r}
+table_of_power <- read_csv("/Volumes/hkr-storage/Research/dfuller/Walkabilly/studies/INTERACT/Data/Victoria/Sensedoc/victoria_top_minute.csv")
+```
+
+## Adding day of year from UTC date to table of power
+```{r}
+table_of_power$utc_date <- table_of_power %>% ymd_hms(table_of_power$utc_date)
+
+table_of_power <- table_of_power %>% mutate(doy_1 = lubridate::yday(utcdate))
+
+table_of_power <- table_of_power %>% mutate(interact_id = inter_id)
+
+table_of_power_merged <- left_join(table_of_power, doy_start_end_final, by = "interact_id")
+```
+
+## Filtering to get new table of power file with correct dates and number of points
+```{r}
+table_of_power_merged_1 <- group_by(gps_id, doy_1) %>% filter(doy_1 >= doy_start) %>% filter(doy_1 <= doy_end) 
+
+table_of_power_merged_2 <- table_of_power_merged_1 %>% mutate(n_points = 1)
+#adding a point to each row to allow for sum of points per day to filter again
+
+table_of_power_merged_3 <- table_of_power_merged_2 %>% group_by(interact_id.y, doy_1) %>%
+   dplyr::mutate(day_points = sum(n_points))
+
+table_of_power_merged_4 <- table_of_power_merged_3 %>% filter(day_points > 7500)
+#filtering entire data frame for points greater than 7500. 
+
+```
+

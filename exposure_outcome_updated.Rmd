@@ -181,7 +181,6 @@ victoria_gps_only_merged_updated_1 <- left_join(victoria_gps_only_merged_updated
 write_csv(victoria_gps_only_merged_updated_1, "victoria_gps_only_merged_updated_1.csv")
 ```
 
-
 ## Reducing Data frame into a more manageable file
 ```{r}
 victoria_small <- victoria_gps_only_merged_updated_1 %>% dplyr::select("interact_id", "sensedoc_ID", "ethica_ID", "gps_id.x", "residence_cp", "age_calculated", "age_categories", "gender", "health_status", "marital", "income_1", "income_2", "income_satisfy", "ethnicity", "born_canada", "children_1", "car_access", "transp_bikes_adults", "bike_safety",  "bike_freq_a", "bike_freq_b", "bike_freq_c", "bike_freq_d", "path_comf", "residential_street_comf", "res_street_traffic_calming_comf", "major_street_no_bike_lane", "major_street_bike_lane", "major_street_separated_bike_lane", "aaa_familiarity_1", "aaa_idea_1", "aaa_bike_more_1", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent", "doy_start", "doy_end")
@@ -193,6 +192,18 @@ write_csv(victoria_small, "victoria_small.csv")
 victoria_small_merged <- left_join(victoria_small, summary_wear_stamps, by = "interact_id")
 
 write_csv(victoria_small_merged, "victoria_small_merged.csv")
+```
+
+## GPS Wear Time 
+```{r}
+summary(victoria_small_merged$total_hours)
+sd(victoria_small_merged$total_hours)
+
+summary(victoria_small_merged$number_days)
+sd(victoria_small_merged$number_days)
+
+summary(victoria_small_merged$average_hours)
+sd(victoria_small_merged$average_hours)
 ```
 
 ## Models
@@ -222,6 +233,8 @@ victoria_small_merged <- victoria_small_merged %>% mutate(gender_updated = case_
   gender == "Men" ~ "Men"
 )) 
 tabyl(victoria_small_merged$gender_updated)
+
+victoria_small_merged_1 <- filter(victoria_small_merged, gender_updated == "Women" or "Men")
 ```
 
 ## Final Fit Regression Models 
@@ -231,19 +244,19 @@ victoria_small_merged <- victoria_small_merged %>%
 
 explanatory = c("percent", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
 dependent = "total_pa_met_formula"
-victoria_small_merged %>% finalfit(dependent, explanatory, metrics = TRUE)
+victoria_small_merged %>% finalfit(dependent, explanatory) -> t1
 knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+
+
+
+lm_1 <- lm(total_pa_met_formula ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = victoria_small_merged)
+summary(lm_1)
+
+victoria_small_merged$lm_fitted <- fitted(lm_1)
+
+ggplot(data = lm_1, aes(fitted, model$total_pa_met_formula)) + 
+         geom_point()
+
 ```
 
-## GPS Wear Time 
-```{r}
-summary(victoria_small_merged$total_hours)
-sd(victoria_small_merged$total_hours)
-
-summary(victoria_small_merged$number_days)
-sd(victoria_small_merged$number_days)
-
-summary(victoria_small_merged$average_hours)
-sd(victoria_small_merged$average_hours)
-```
 
