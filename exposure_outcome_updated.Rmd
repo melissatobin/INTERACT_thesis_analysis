@@ -51,8 +51,8 @@ library(finalfit)
 ## Reading in Data to make sure timestamps code was right
 ```{r}
 wear_time_stamps_updated_final <- read_csv("wear_time_stamps_updated_final.csv")
-wear_time_stamps <- read_csv("wear_time_stamps.csv")
-wear_time_stamps_updated <- read_csv("wear_time_stamps_updated.csv")
+#wear_time_stamps <- read_csv("wear_time_stamps.csv")
+#wear_time_stamps_updated <- read_csv("wear_time_stamps_updated.csv")
 ##everything looks great
 
 colnames(wear_time_stamps_updated_final)[colnames(wear_time_stamps_updated_final)== "interact_id.y"] <- "interact_id"
@@ -205,16 +205,45 @@ confint(regression_1)
 #plot(regression_1)
 ```
 
-## Trying final fit
+## Recoding and ordering variables for regression 
 ```{r}
-explanatory = c("percent", "age_categories")
-dependent = "total_pa_met_formula"
-victoria_small_merged %>% finalfit(dependent, explanatory)
-knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) #not sure what this does but copied anyways from the explanation 
-typeof(victoria_small_merged$income_2)
+victoria_small_merged <- victoria_small_merged %>% mutate(ethnicity_updated = case_when(
+  ethnicity == "Caucasian" ~ "Caucasian",
+  ethnicity == "Aboriginal" ~ "Other",
+  ethnicity == "Asian" ~ "Other",
+ ethnicity == "Latin American" ~ "Other",
+  ethnicity == "Unknown" ~ "Other",
+))
 
-typeof(victoria_small_merged$gender)
-typeof(victoria_small_merged$age_categories)
-tabyl(victoria_small_merged$age_categories)
+victoria_small_merged$income_2 <- factor(victoria_small_merged$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+
+victoria_small_merged <- victoria_small_merged %>% mutate(gender_updated = case_when(
+  gender == "Women" ~ "Women",
+  gender == "Men" ~ "Men"
+)) 
+tabyl(victoria_small_merged$gender_updated)
+```
+
+## Final Fit Regression Models 
+```{r}
+victoria_small_merged <- victoria_small_merged %>% 
+                              mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
+
+explanatory = c("percent", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
+dependent = "total_pa_met_formula"
+victoria_small_merged %>% finalfit(dependent, explanatory, metrics = TRUE)
+knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+```
+
+## GPS Wear Time 
+```{r}
+summary(victoria_small_merged$total_hours)
+sd(victoria_small_merged$total_hours)
+
+summary(victoria_small_merged$number_days)
+sd(victoria_small_merged$number_days)
+
+summary(victoria_small_merged$average_hours)
+sd(victoria_small_merged$average_hours)
 ```
 

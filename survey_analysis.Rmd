@@ -163,19 +163,19 @@ plot(age_histogram)
 ## Age Categories (using stats can age groups)
 ```{r}
 victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(age_categories = case_when(
-  age_calculated < 25 ~ "20-24",
-  age_calculated >= 25 & age_calculated <= 29 ~ "25-29",
-  age_calculated >= 30 & age_calculated <= 34 ~ "30-34", 
-  age_calculated >= 35 & age_calculated <= 39 ~ "35-39",
-  age_calculated >= 40 & age_calculated <= 44 ~ "40-44",
-  age_calculated >= 45 & age_calculated <= 49 ~ "45-49",
-  age_calculated >= 50 & age_calculated <= 54 ~ "50-54",
-  age_calculated >= 55 & age_calculated <= 59 ~ "55-59", 
-  age_calculated >= 60 & age_calculated <= 64 ~ "60-64",
-  age_calculated >= 65 & age_calculated <= 69 ~ "65-69",
-  age_calculated >= 70 & age_calculated <= 74 ~ "70-74", 
-  age_calculated >= 75 & age_calculated <= 79 ~ "75-79",
-  age_calculated >= 80 & age_calculated <= 84 ~ "80-84"
+  age_calculated < 25 ~ "20-29",
+  age_calculated >= 25 & age_calculated <= 29 ~ "20-29",
+  age_calculated >= 30 & age_calculated <= 34 ~ "30-39", 
+  age_calculated >= 35 & age_calculated <= 39 ~ "30-39",
+  age_calculated >= 40 & age_calculated <= 44 ~ "40-49",
+  age_calculated >= 45 & age_calculated <= 49 ~ "40-49",
+  age_calculated >= 50 & age_calculated <= 54 ~ "50-59",
+  age_calculated >= 55 & age_calculated <= 59 ~ "50-59", 
+  age_calculated >= 60 & age_calculated <= 64 ~ "60+",
+  age_calculated >= 65 & age_calculated <= 69 ~ "60+",
+  age_calculated >= 70 & age_calculated <= 74 ~ "60+", 
+  age_calculated >= 75 & age_calculated <= 79 ~ "60+",
+  age_calculated >= 80 & age_calculated <= 84 ~ "60+"
 ))
 tabyl(victoria_new_ID_gps$age_categories)
 typeof(victoria_new_ID_gps$age_categories)
