@@ -390,8 +390,15 @@ table_of_power_merged_4 <- table_of_power_merged_3 %>% dplyr::select("interact_i
 ```{r}
 victoria_small_merged <- read_csv("victoria_small_merged.csv")
 
-power_victoria_merged <- left_join(table_of_power_merged_2, victoria_small_merged, by = "interact_id")
+power_victoria_merged <- full_join(table_of_power_merged_2, victoria_small_merged, by = "interact_id")
+write_csv(power_victoria_merged, "power_victoria_merged.csv")
+summary_power_victoria_merged <- full_join(table_of_power_merged_4, victoria_small_merged, by = "interact_id")
+write_csv(summary_power_victoria_merged, "summary_power_victoria_merged.csv")
 
-power_victoria_merged_1 <- left_join(table_of_power_merged_4, victoria_small_merged, by = "interact_id")
+```
+
+
+```{r}
+any(table_of_power == 101005415)
 ```
 

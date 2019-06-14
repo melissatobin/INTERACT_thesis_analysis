@@ -2,10 +2,14 @@
 title: "gps_participant_survey_analysis"
 author: "Melissa Tobin"
 date: "31/05/2019"
-output: html_document
+output: 
+  html_document:
+        keep_md: true
 ---
 
 ```{r setup, include=FALSE}
+
+chooseCRANmirror(graphics = FALSE, ind = 1)
 knitr::opts_chunk$set(echo = TRUE)
 
 OS <- Sys.info()
@@ -70,7 +74,7 @@ plot(age_categories_plot)
 ```{r}
 tabyl(victoria_small_merged$gender)
 
-gender_plot <- ggplot(data = victoria_new_ID_gps, aes(gender)) +
+gender_plot <- ggplot(data = victoria_small_merged, aes(gender)) +
   geom_bar(aes(fill = gender)) +
   labs(title = "Gender",
        x = "Gender Type",
@@ -84,7 +88,7 @@ plot(gender_plot)
 victoria_small_merged$health_status <- factor(victoria_small_merged$health_status, c("Poor", "Fair", "Good", "Very Good", "Excellent"))
 tabyl(victoria_small_merged$health_status)
 
-health_plot <- ggplot(data = victoria_gps_only, aes(health_status)) +
+health_plot <- ggplot(data = victoria_small_merged, aes(health_status)) +
   geom_bar() +
   labs(title = "Health Status",
        x = "Health Status",
@@ -95,7 +99,7 @@ plot(health_plot)
 ## Marital Status
 ```{r}
 tabyl(victoria_small_merged$marital)
-marital_plot <- ggplot(data = victoria_gps_only, aes(marital)) +
+marital_plot <- ggplot(data = victoria_small_merged, aes(marital)) +
   geom_bar() +
   labs(title = "Marital Status",
        x = "Marital Status",
@@ -105,7 +109,7 @@ plot(marital_plot)
 ## Ethnicity 
 ```{r}
 tabyl(victoria_small_merged$ethnicity)
-ethnicity_plot <- ggplot(data = victoria_gps_only, aes(ethnicity)) +
+ethnicity_plot <- ggplot(data = victoria_small_merged, aes(ethnicity)) +
   geom_bar() +
   labs(title = "Ethnicity",
        x = "Ethnic Group",
@@ -121,7 +125,7 @@ victoria_small_merged$income_1 <- factor(victoria_small_merged$income_1, c("No i
 tabyl(victoria_small_merged$income_1)
 
 
-income_plot <- ggplot(data = victoria_new_ID_gps, aes(income_1)) +
+income_plot <- ggplot(data = victoria_small_merged, aes(income_1)) +
   geom_bar() +
   labs(title = "Income",
        x = "Income Level",
@@ -150,7 +154,7 @@ victoria_small_merged <- victoria_small_merged %>% mutate(car_access_1 = case_wh
   car_access == 2 ~ "No"
 ))
 tabyl(victoria_small_merged$car_access_1)
-tabyl(victoria_gps_only$cars_household)
+
 ```
 
 ## Support for the AAA
