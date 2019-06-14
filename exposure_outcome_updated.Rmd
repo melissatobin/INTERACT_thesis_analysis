@@ -45,6 +45,7 @@ library(lubridate)
 library(anytime)
 library(stringr)
 library(stringi)
+install.packages("finalfit")
 library(finalfit)
 ```
 
@@ -234,7 +235,7 @@ victoria_small_merged <- victoria_small_merged %>% mutate(gender_updated = case_
 )) 
 tabyl(victoria_small_merged$gender_updated)
 
-victoria_small_merged_1 <- filter(victoria_small_merged, gender_updated == "Women" or "Men")
+victoria_small_merged_1 <- filter(victoria_small_merged, gender_updated == "Women" or "Men") #fix this
 ```
 
 ## Final Fit Regression Models 

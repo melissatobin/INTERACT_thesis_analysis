@@ -2,7 +2,9 @@
 title: "INTERACT Survey Data Victoria"
 author: "Melissa Tobin"
 date: '2019-05-14'
-output: html_document
+output:  
+  html_document:
+        keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -141,23 +143,6 @@ sd(victoria_new_ID_gps$age_calculated)
 ```{r}
 summary(victoria_new_ID_gps$age_calculated, na.rm = TRUE)
 sd(victoria_new_ID_gps$age_calculated)
-
-age_categories_plot <- ggplot (data = victoria_new_ID_gps, aes(age_categories)) + 
-    geom_bar() + 
-        labs(title = "Age ", 
-           x = "Age Categories", 
-            y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=60, hjust=1))
-plot(age_categories_plot)
-```
-
-## Age histogram 
-```{r}
-age_histogram <- ggplot (data = victoria_new_ID_gps, aes(age_calculated)) + 
-    geom_histogram(aes(y = ..density..), color = "black", binwidth = 0.05) + 
-      labs(title = "Barriers to Exercise ", 
-          x = "Barriers to Exercise Score", 
-          y = "Density (% of Participants)") 
-plot(age_histogram)
 ```
 
 ## Age Categories (using stats can age groups)
@@ -180,6 +165,26 @@ victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(age_categories = case_when
 tabyl(victoria_new_ID_gps$age_categories)
 typeof(victoria_new_ID_gps$age_categories)
 ```
+
+```{r}
+age_categories_plot <- ggplot (data = victoria_new_ID_gps, aes(age_categories)) + 
+    geom_bar() + 
+        labs(title = "Age ", 
+           x = "Age Categories", 
+            y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=60, hjust=1))
+plot(age_categories_plot)
+```
+
+## Age histogram 
+```{r}
+age_histogram <- ggplot (data = victoria_new_ID_gps, aes(age_calculated)) + 
+    geom_histogram(aes(y = ..density..), color = "black", binwidth = 0.05) + 
+      labs(title = "Barriers to Exercise ", 
+          x = "Barriers to Exercise Score", 
+          y = "Density (% of Participants)") 
+plot(age_histogram)
+```
+
 
 ## Gender Victoria
 ```{r}
@@ -517,8 +522,6 @@ tabyl(victoria_new_ID_gps$res_street_traffic_calming_comf)
 
 ## Bicycle Facility Preference - Major Street with no bike lane 
 ```{r}
-tabyl(victoria_new_ID_gps$bike_comf_d)
-
 victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(major_street_no_bike_lane = case_when(
   bike_comf_d == 1 ~ "Very uncomfortable",
   bike_comf_d == 2 ~ "Somewhat uncomfortable", 
@@ -527,7 +530,7 @@ victoria_new_ID_gps <- victoria_new_ID_gps %>% mutate(major_street_no_bike_lane 
 ))
 
 victoria_new_ID_gps$major_street_no_bike_lane <- factor(victoria_new_ID_gps$major_street_no_bike_lane, c("Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
-striped 
+
 ```
 
 ## Bicycle Facility Preference - Major Street with bike lane 
