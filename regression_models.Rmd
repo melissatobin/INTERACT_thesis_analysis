@@ -48,17 +48,22 @@ library(anytime)
 library(stringr)
 library(stringi)
 library(finalfit)
+library(data.table)
 ```
 
 ## Reading in data
 ```{r}
-victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
+victoria_small_merged_1 <- fread("victoria_small_merged_1.csv")
 
-power_victoria_merged <- read_csv("power_victoria_merged.csv") #big file with all summary counts
-
-summary_power_victoria_merged <- read_csv("summary_power_victoria_merged.csv") #summary table with summarized PA
+power_victoria_merged <- fread("power_victoria_merged.csv") #big file with all summary counts
+table_of_power_merged_2 <- fread("table_of_power_merged_2.csv")
+summary_power_victoria_merged <- fread("summary_power_victoria_merged.csv") #summary table with summarized PA
 ```
 
+## Variables
+```{r}
+power_victoria_merged$income_2 <- factor(power_victoria_merged$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+```
 
 ## Models
 ```{r}

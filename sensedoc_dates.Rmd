@@ -9,16 +9,65 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+chooseCRANmirror(graphics = FALSE, ind = 1)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+```
+
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+library(lubridate)
+library(anytime)
+library(stringr)
+library(stringi)
+library(finalfit)
+```
+
+## Reading in Data to make sure timestamps code was right
+```{r}
+wear_time_stamps <- read_csv("wear_time_stamps.csv")
+
+victoria_gps_only_merged_updated_1 <- read_csv("victoria_gps_only_merged_updated_1.csv")
 ```
 
 ## Rename INTERACT ID to GPS ID on the wear_time_stamps file
 ```{r}
-colnames(wear_time_stamps)[colnames(wear_time_stamps)== "interact_id"] <- "gps_id" #this is the gps ID not interact ID. Changed name to reflect that
+colnames(wear_time_stamps)[colnames(wear_time_stamps)== "interact_id"] <- "gps_id"#this is the gps ID not interact ID. Changed name to reflect that
+
+colnames(victoria_gps_only_merged_updated_1)[colnames(victoria_gps_only_merged_updated_1)== "gps_id.x"] <- "gps_id"
 ```
 
 ## Merge wear_time_stamps with victoria_gps_only 
 ```{r}
-id_only <- dplyr::select(victoria_gps_only_merged, "interact_id", "gps_id", "sensedoc_ID" )
+id_only <- dplyr::select(victoria_gps_only_merged_updated_1, "interact_id", "gps_id", "sensedoc_ID" )
 
 wear_time_stamps_ID <- left_join(wear_time_stamps, id_only, by = "gps_id")
 ```

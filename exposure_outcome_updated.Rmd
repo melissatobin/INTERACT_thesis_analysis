@@ -154,18 +154,33 @@ write_csv(PA_total_and_cycling, "PA_total_and_cycling.csv")
 
 ##Plotting exposure 
 ```{r}
-exposure_plot <- ggplot(PA_total_and_cycling) + 
-                      geom_histogram(aes(percent), binwidth = 2)
+exposure_plot <- ggplot(victoria_small_merged_1) + 
+                      geom_density(aes(percent)) +
+  labs(title = "Total Exposure",
+       x = "Percent Exposure",
+       y = "Percentage of Participants")
                 
 plot(exposure_plot)
 
-tabyl(PA_total_and_cycling$percent)
+summary(victoria_small_merged_1$percent)
+sd(victoria_small_merged_1$percent)
+describeBy(victoria_small_merged_1$percent)
+```
+
+## Self-report PA stats
+```{r}
+summary(victoria_small_merged_1$total_pa_met_formula)
+sd(victoria_small_merged_1$total_pa_met_formula)
+describeBy(victoria_small_merged_1$total_pa_met_formula)
 ```
 
 ## Plotting outcome 
 ```{r}
-pa_total_plot <- ggplot(PA_total_and_cycling) + 
-                      geom_histogram(aes(total_pa_met_formula))
+pa_total_plot <- ggplot(victoria_small_merged_1) + 
+                      geom_histogram(aes(total_pa_met_formula), bins = 60) +
+  labs(title = "Total MET-minutes of Physical Activity",
+       x = "Total MET-minutes of PA",
+       y = "Percentage of Participants")
                 
 plot(pa_total_plot)
 
@@ -235,4 +250,5 @@ sd(victoria_small_merged_1$number_days)
 summary(victoria_small_merged_1$average_hours)
 sd(victoria_small_merged_1$average_hours)
 ```
+
 
