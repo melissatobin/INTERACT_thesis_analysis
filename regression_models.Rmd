@@ -1,0 +1,115 @@
+---
+title: "regression_models"
+author: "Melissa Tobin"
+date: "19/06/2019"
+output:   
+  html_document:
+        keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+chooseCRANmirror(graphics = FALSE, ind = 1)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+```
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+library(lubridate)
+library(anytime)
+library(stringr)
+library(stringi)
+library(finalfit)
+```
+
+## Reading in data
+```{r}
+victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
+
+power_victoria_merged <- read_csv("power_victoria_merged.csv") #big file with all summary counts
+
+summary_power_victoria_merged <- read_csv("summary_power_victoria_merged.csv") #summary table with summarized PA
+```
+
+
+## Models
+```{r}
+regression_1 <- lm(total_pa_met_formula ~ percent, data = victoria_small_merged_1)
+
+summary(regression_1)
+lm.beta(regression_1) ##This isn't working. 
+confint(regression_1)
+#plot(regression_1)
+```
+
+
+## Regression Model with Survey Data
+```{r}
+victoria_small_merged_1 <- victoria_small_merged_1 %>% 
+                              mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
+
+explanatory = c("percent", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
+dependent = "total_pa_met_formula"
+victoria_small_merged_1 %>% finalfit(dependent, explanatory) -> t1
+knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+
+
+
+lm_1 <- lm(total_pa_met_formula ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = victoria_small_merged_1)
+summary(lm_1)
+
+victoria_small_merged_1$lm_fitted <- fitted(lm_1)
+
+#ggplot(data = lm_1, aes(fitted, model$total_pa_met_formula)) + 
+         #geom_point()
+
+```
+
+## Regression Model with summarry accelerometer data
+```{r}
+summary_power_victoria_merged <- summary_power_victoria_merged %>% 
+                              mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
+explanatory = c("percent", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
+dependent = "total_pa"
+summary_power_victoria_merged %>% finalfit(dependent, explanatory) -> t2
+knitr::kable(t2, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+```
+
+## Regression Model with summary_counts as outcome variable - from accelerometer data
+```{r}
+power_victoria_merged <- power_victoria_merged %>% 
+                              mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
+explanatory = c("percent", "doy_1", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
+dependent = "summary_count"
+power_victoria_merged %>% finalfit(dependent, explanatory) -> t3
+knitr::kable(t3, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+```
+

@@ -47,7 +47,6 @@ library(lubridate)
 library(anytime)
 library(stringr)
 library(stringi)
-install.packages("finalfit")
 library(finalfit)
 ```
 
@@ -197,28 +196,6 @@ victoria_small_merged <- left_join(victoria_small, summary_wear_stamps, by = "in
 write_csv(victoria_small_merged, "victoria_small_merged.csv")
 ```
 
-## GPS Wear Time 
-```{r}
-summary(victoria_small_merged$total_hours)
-sd(victoria_small_merged$total_hours)
-
-summary(victoria_small_merged$number_days)
-sd(victoria_small_merged$number_days)
-
-summary(victoria_small_merged$average_hours)
-sd(victoria_small_merged$average_hours)
-```
-
-## Models
-```{r}
-regression_1 <- lm(total_pa_met_formula ~ percent, data = victoria_small_merged)
-
-summary(regression_1)
-lm.beta(regression_1) ##This isn't working. 
-confint(regression_1)
-#plot(regression_1)
-```
-
 ## Recoding and ordering variables for regression 
 ```{r}
 victoria_small_merged <- victoria_small_merged %>% mutate(ethnicity_updated = case_when(
@@ -237,29 +214,25 @@ victoria_small_merged <- victoria_small_merged %>% mutate(gender_updated = case_
 )) 
 tabyl(victoria_small_merged$gender_updated)
 
-victoria_small_merged_1 <- filter(victoria_small_merged, gender_updated == "Women" or "Men") #fix this
+victoria_small_merged <- victoria_small_merged %>% mutate (gender_check = case_when(
+  gender == "Women" ~ 1,
+  gender == "Men" ~ 1
+))
+
+victoria_small_merged_1 <- filter(victoria_small_merged, gender_check == 1) 
+
+write_csv(victoria_small_merged_1, "victoria_small_merged_1.csv")
 ```
 
-## Final Fit Regression Models 
+## GPS Wear Time 
 ```{r}
-victoria_small_merged <- victoria_small_merged %>% 
-                              mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
+summary(victoria_small_merged_1$total_hours)
+sd(victoria_small_merged_1$total_hours)
 
-explanatory = c("percent", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
-dependent = "total_pa_met_formula"
-victoria_small_merged %>% finalfit(dependent, explanatory) -> t1
-knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+summary(victoria_small_merged_1$number_days)
+sd(victoria_small_merged_1$number_days)
 
-
-
-lm_1 <- lm(total_pa_met_formula ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = victoria_small_merged)
-summary(lm_1)
-
-victoria_small_merged$lm_fitted <- fitted(lm_1)
-
-ggplot(data = lm_1, aes(fitted, model$total_pa_met_formula)) + 
-         geom_point()
-
+summary(victoria_small_merged_1$average_hours)
+sd(victoria_small_merged_1$average_hours)
 ```
-
 

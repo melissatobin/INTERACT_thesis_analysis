@@ -12,21 +12,6 @@ output:
 ## Loading Packages
 
 ```r
-install.packages("lmtest")
-```
-
-```
-## Installing package into '/Users/shkr_dfuller_stu1/Library/R/3.5/library'
-## (as 'lib' is unspecified)
-```
-
-```
-## 
-## The downloaded binary packages are in
-## 	/var/folders/v7/t3tlmvn1459971hn6jvtwhmdcz8g_f/T//RtmpY2waR4/downloaded_packages
-```
-
-```r
 library(lmtest)
 ```
 
@@ -392,7 +377,7 @@ library(sf)
 ## Loading in Data
 
 ```r
-victoria_small_merged <- read_csv("victoria_small_merged.csv")
+victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
 ```
 
 ```
@@ -419,7 +404,7 @@ victoria_small_merged <- read_csv("victoria_small_merged.csv")
 ##   doy_start = col_integer(),
 ##   doy_end = col_integer(),
 ##   total_hours = col_double()
-##   # ... with 4 more columns
+##   # ... with 5 more columns
 ## )
 ```
 
@@ -431,26 +416,26 @@ victoria_small_merged <- read_csv("victoria_small_merged.csv")
 ## Age descriptive Statistics for Victoria
 
 ```r
-summary(victoria_small_merged$age_calculated, na.rm = TRUE)
+summary(victoria_small_merged_1$age_calculated, na.rm = TRUE)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    22.0    34.0    44.0    45.6    57.0    79.0
+##   22.00   34.00   44.00   45.66   57.00   79.00
 ```
 
 ```r
-sd(victoria_small_merged$age_calculated)
+sd(victoria_small_merged_1$age_calculated)
 ```
 
 ```
-## [1] 13.73714
+## [1] 13.7599
 ```
 
 ## Age descriptive Statistics for Victoria
 
 ```r
-age_categories_plot <- ggplot (data = victoria_small_merged, aes(age_categories)) + 
+age_categories_plot <- ggplot (data = victoria_small_merged_1, aes(age_categories)) + 
     geom_bar() + 
         labs(title = "Age ", 
            x = "Age Categories", 
@@ -463,18 +448,17 @@ plot(age_categories_plot)
 ## Gender
 
 ```r
-tabyl(victoria_small_merged$gender)
+tabyl(victoria_small_merged_1$gender)
 ```
 
 ```
-##  victoria_small_merged$gender  n    percent
-##                           Men 71 0.47019868
-##    Trans or gender non-binary  2 0.01324503
-##                         Women 78 0.51655629
+##  victoria_small_merged_1$gender  n   percent
+##                             Men 71 0.4765101
+##                           Women 78 0.5234899
 ```
 
 ```r
-gender_plot <- ggplot(data = victoria_small_merged, aes(gender)) +
+gender_plot <- ggplot(data = victoria_small_merged_1, aes(gender)) +
   geom_bar(aes(fill = gender)) +
   labs(title = "Gender",
        x = "Gender Type",
@@ -488,21 +472,21 @@ plot(gender_plot)
 ## Health Status
 
 ```r
-victoria_small_merged$health_status <- factor(victoria_small_merged$health_status, c("Poor", "Fair", "Good", "Very Good", "Excellent"))
-tabyl(victoria_small_merged$health_status)
+victoria_small_merged_1$health_status <- factor(victoria_small_merged_1$health_status, c("Poor", "Fair", "Good", "Very Good", "Excellent"))
+tabyl(victoria_small_merged_1$health_status)
 ```
 
 ```
-##  victoria_small_merged$health_status  n     percent
-##                                 Poor  1 0.006622517
-##                                 Fair  5 0.033112583
-##                                 Good 30 0.198675497
-##                            Very Good 72 0.476821192
-##                            Excellent 43 0.284768212
+##  victoria_small_merged_1$health_status  n     percent
+##                                   Poor  1 0.006711409
+##                                   Fair  5 0.033557047
+##                                   Good 29 0.194630872
+##                              Very Good 71 0.476510067
+##                              Excellent 43 0.288590604
 ```
 
 ```r
-health_plot <- ggplot(data = victoria_small_merged, aes(health_status)) +
+health_plot <- ggplot(data = victoria_small_merged_1, aes(health_status)) +
   geom_bar() +
   labs(title = "Health Status",
        x = "Health Status",
@@ -515,19 +499,19 @@ plot(health_plot)
 ## Marital Status
 
 ```r
-tabyl(victoria_small_merged$marital)
+tabyl(victoria_small_merged_1$marital)
 ```
 
 ```
-##  victoria_small_merged$marital   n    percent
-##        Married (or common law) 113 0.74834437
-##          Separated or divorced  12 0.07947020
-##         Single (never married)  24 0.15894040
-##                        Widowed   2 0.01324503
+##  victoria_small_merged_1$marital   n    percent
+##          Married (or common law) 113 0.75838926
+##            Separated or divorced  12 0.08053691
+##           Single (never married)  22 0.14765101
+##                          Widowed   2 0.01342282
 ```
 
 ```r
-marital_plot <- ggplot(data = victoria_small_merged, aes(marital)) +
+marital_plot <- ggplot(data = victoria_small_merged_1, aes(marital)) +
   geom_bar() +
   labs(title = "Marital Status",
        x = "Marital Status",
@@ -536,23 +520,24 @@ plot(marital_plot)
 ```
 
 ![](gps_participant_survey_analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
 ## Ethnicity 
 
 ```r
-tabyl(victoria_small_merged$ethnicity)
+tabyl(victoria_small_merged_1$ethnicity)
 ```
 
 ```
-##  victoria_small_merged$ethnicity   n     percent
-##                       Aboriginal   2 0.013245033
-##                            Asian  11 0.072847682
-##                        Caucasian 134 0.887417219
-##                   Latin American   1 0.006622517
-##                          Unknown   3 0.019867550
+##  victoria_small_merged_1$ethnicity   n     percent
+##                         Aboriginal   2 0.013422819
+##                              Asian  11 0.073825503
+##                          Caucasian 132 0.885906040
+##                     Latin American   1 0.006711409
+##                            Unknown   3 0.020134228
 ```
 
 ```r
-ethnicity_plot <- ggplot(data = victoria_small_merged, aes(ethnicity)) +
+ethnicity_plot <- ggplot(data = victoria_small_merged_1, aes(ethnicity)) +
   geom_bar() +
   labs(title = "Ethnicity",
        x = "Ethnic Group",
@@ -565,29 +550,29 @@ plot(ethnicity_plot)
 ## Income
 
 ```r
-victoria_small_merged$income_1 <- factor(victoria_small_merged$income_1, c("No income", "$1 to $9,999", "$10,000 to $14,999", "$15,000 to $19,999", "$20,000 to $29,999", "$30,000 to $39,999", "$40,000 to $49,999","$50,000 to $99,999","$100,000 to $149,999","$150,000 to $199,999", "$200,000 or more", "I don't know/Prefer not to answer"))
+victoria_small_merged_1$income_1 <- factor(victoria_small_merged_1$income_1, c("No income", "$1 to $9,999", "$10,000 to $14,999", "$15,000 to $19,999", "$20,000 to $29,999", "$30,000 to $39,999", "$40,000 to $49,999","$50,000 to $99,999","$100,000 to $149,999","$150,000 to $199,999", "$200,000 or more", "I don't know/Prefer not to answer"))
 
-tabyl(victoria_small_merged$income_1)
+tabyl(victoria_small_merged_1$income_1)
 ```
 
 ```
-##     victoria_small_merged$income_1  n    percent
+##   victoria_small_merged_1$income_1  n    percent
 ##                          No income  0 0.00000000
-##                       $1 to $9,999  2 0.01324503
+##                       $1 to $9,999  2 0.01342282
 ##                 $10,000 to $14,999  0 0.00000000
-##                 $15,000 to $19,999  3 0.01986755
-##                 $20,000 to $29,999  5 0.03311258
-##                 $30,000 to $39,999  6 0.03973510
-##                 $40,000 to $49,999  9 0.05960265
-##                 $50,000 to $99,999 53 0.35099338
-##               $100,000 to $149,999 38 0.25165563
-##               $150,000 to $199,999 20 0.13245033
-##                   $200,000 or more  3 0.01986755
-##  I don't know/Prefer not to answer 12 0.07947020
+##                 $15,000 to $19,999  3 0.02013423
+##                 $20,000 to $29,999  5 0.03355705
+##                 $30,000 to $39,999  6 0.04026846
+##                 $40,000 to $49,999  9 0.06040268
+##                 $50,000 to $99,999 52 0.34899329
+##               $100,000 to $149,999 37 0.24832215
+##               $150,000 to $199,999 20 0.13422819
+##                   $200,000 or more  3 0.02013423
+##  I don't know/Prefer not to answer 12 0.08053691
 ```
 
 ```r
-income_plot <- ggplot(data = victoria_small_merged, aes(income_1)) +
+income_plot <- ggplot(data = victoria_small_merged_1, aes(income_1)) +
   geom_bar() +
   labs(title = "Income",
        x = "Income Level",
@@ -598,300 +583,287 @@ plot(income_plot)
 ![](gps_participant_survey_analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
-tabyl(victoria_small_merged$income_2)
+tabyl(victoria_small_merged_1$income_2)
 ```
 
 ```
-##     victoria_small_merged$income_2  n   percent
-##               $100,000 to $149,999 38 0.2516556
-##                   $150,000 or more 23 0.1523179
-##                    $49,000 or less 25 0.1655629
-##                 $50,000 to $99,999 53 0.3509934
-##  I don't know/Prefer not to answer 12 0.0794702
+##   victoria_small_merged_1$income_2  n    percent
+##               $100,000 to $149,999 37 0.24832215
+##                   $150,000 or more 23 0.15436242
+##                    $49,000 or less 25 0.16778523
+##                 $50,000 to $99,999 52 0.34899329
+##  I don't know/Prefer not to answer 12 0.08053691
 ```
 
 ## Children 
 
 ```r
-tabyl(victoria_small_merged$children_1)
+tabyl(victoria_small_merged_1$children_1)
 ```
 
 ```
-##  victoria_small_merged$children_1  n   percent
-##                                No 72 0.4768212
-##                               Yes 79 0.5231788
+##  victoria_small_merged_1$children_1  n   percent
+##                                  No 70 0.4697987
+##                                 Yes 79 0.5302013
 ```
 
 ## Born in Canada
 
 ```r
-tabyl(victoria_small_merged$born_canada)
+tabyl(victoria_small_merged_1$born_canada)
 ```
 
 ```
-##  victoria_small_merged$born_canada   n   percent
-##                                 No  44 0.2913907
-##                                Yes 107 0.7086093
+##  victoria_small_merged_1$born_canada   n  percent
+##                                   No  44 0.295302
+##                                  Yes 105 0.704698
 ```
 
 ## Car Access
 
 ```r
-tabyl(victoria_small_merged$car_access)
+tabyl(victoria_small_merged_1$car_access)
 ```
 
 ```
-##  victoria_small_merged$car_access   n    percent
-##                                -7   3 0.01986755
-##                                 1 137 0.90728477
-##                                 2  11 0.07284768
+##  victoria_small_merged_1$car_access   n    percent
+##                                  -7   2 0.01342282
+##                                   1 136 0.91275168
+##                                   2  11 0.07382550
 ```
 
 ```r
-victoria_small_merged <- victoria_small_merged %>% mutate(car_access_1 = case_when(
+victoria_small_merged_1 <- victoria_small_merged_1 %>% mutate(car_access_1 = case_when(
   car_access == 1 ~ "Yes",
   car_access == 2 ~ "No"
 ))
-tabyl(victoria_small_merged$car_access_1)
+tabyl(victoria_small_merged_1$car_access_1)
 ```
 
 ```
-##  victoria_small_merged$car_access_1   n    percent valid_percent
-##                                  No  11 0.07284768    0.07432432
-##                                 Yes 137 0.90728477    0.92567568
-##                                <NA>   3 0.01986755            NA
+##  victoria_small_merged_1$car_access_1   n    percent valid_percent
+##                                    No  11 0.07382550    0.07482993
+##                                   Yes 136 0.91275168    0.92517007
+##                                  <NA>   2 0.01342282            NA
 ```
 
 ## Support for the AAA
 
 ```r
-tabyl(victoria_small_merged$aaa_familiarity_1)
+tabyl(victoria_small_merged_1$aaa_familiarity_1)
 ```
 
 ```
-##  victoria_small_merged$aaa_familiarity_1   n   percent
-##                                       No  43 0.2847682
-##                                      Yes 108 0.7152318
-```
-
-```r
-victoria_small_merged$aaa_idea_1 <- factor(victoria_small_merged$aaa_idea_1, c("I don't know", "Very bad idea", "Somewhat bad idea", "Somewhat good idea", "Very good idea"))
-tabyl(victoria_small_merged$aaa_idea_1)
-```
-
-```
-##  victoria_small_merged$aaa_idea_1   n     percent
-##                      I don't know   0 0.000000000
-##                     Very bad idea   1 0.006622517
-##                 Somewhat bad idea   2 0.013245033
-##                Somewhat good idea  14 0.092715232
-##                    Very good idea 134 0.887417219
+##  victoria_small_merged_1$aaa_familiarity_1   n   percent
+##                                         No  43 0.2885906
+##                                        Yes 106 0.7114094
 ```
 
 ```r
-tabyl(victoria_small_merged$aaa_bike_more_1)
+victoria_small_merged_1$aaa_idea_1 <- factor(victoria_small_merged_1$aaa_idea_1, c("I don't know", "Very bad idea", "Somewhat bad idea", "Somewhat good idea", "Very good idea"))
+tabyl(victoria_small_merged_1$aaa_idea_1)
 ```
 
 ```
-##  victoria_small_merged$aaa_bike_more_1   n   percent
-##                                     No  36 0.2384106
-##                                    Yes 115 0.7615894
+##  victoria_small_merged_1$aaa_idea_1   n     percent
+##                        I don't know   0 0.000000000
+##                       Very bad idea   1 0.006711409
+##                   Somewhat bad idea   2 0.013422819
+##                  Somewhat good idea  14 0.093959732
+##                      Very good idea 132 0.885906040
+```
+
+```r
+tabyl(victoria_small_merged_1$aaa_bike_more_1)
+```
+
+```
+##  victoria_small_merged_1$aaa_bike_more_1   n   percent
+##                                       No  35 0.2348993
+##                                      Yes 114 0.7651007
 ```
 
 ##Preference for Separated Bike Lane
 
 ```r
-victoria_small_merged$major_street_separated_bike_lane <- factor(victoria_small_merged$major_street_separated_bike_lane, c( "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable", "I don't know/Prefer not to answer"))
-tabyl(victoria_small_merged$major_street_separated_bike_lane)
+victoria_small_merged_1$major_street_separated_bike_lane <- factor(victoria_small_merged_1$major_street_separated_bike_lane, c( "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable", "I don't know/Prefer not to answer"))
+tabyl(victoria_small_merged_1$major_street_separated_bike_lane)
 ```
 
 ```
-##  victoria_small_merged$major_street_separated_bike_lane   n    percent
-##                                      Very uncomfortable  12 0.07947020
-##                                  Somewhat uncomfortable   6 0.03973510
-##                                    Somewhat comfortable  30 0.19867550
-##                                        Very comfortable 101 0.66887417
-##                       I don't know/Prefer not to answer   2 0.01324503
-```
-
-```r
-tabyl(victoria_small_merged$major_street_separated_bike_lane)
-```
-
-```
-##  victoria_small_merged$major_street_separated_bike_lane   n    percent
-##                                      Very uncomfortable  12 0.07947020
-##                                  Somewhat uncomfortable   6 0.03973510
-##                                    Somewhat comfortable  30 0.19867550
-##                                        Very comfortable 101 0.66887417
-##                       I don't know/Prefer not to answer   2 0.01324503
+##  victoria_small_merged_1$major_street_separated_bike_lane   n    percent
+##                                        Very uncomfortable  12 0.08053691
+##                                    Somewhat uncomfortable   6 0.04026846
+##                                      Somewhat comfortable  29 0.19463087
+##                                          Very comfortable 100 0.67114094
+##                         I don't know/Prefer not to answer   2 0.01342282
 ```
 
 ## Percieved Cycling Safety in Victoria
 
 ```r
-victoria_small_merged <- victoria_small_merged %>% mutate(bike_safety_1 = case_when(
+victoria_small_merged_1 <- victoria_small_merged_1 %>% mutate(bike_safety_1 = case_when(
   bike_safety == 1 ~ "Very safe",
   bike_safety == 2 ~ "Somewhat safe",
   bike_safety == 3 ~ "Neither safe nor unsafe",
   bike_safety == 4 ~ "Somewhat dangerous",
   bike_safety == 5 ~ "Very dangerous",
 ))
-tabyl(victoria_small_merged$bike_safety_1)
+tabyl(victoria_small_merged_1$bike_safety_1)
 ```
 
 ```
-##  victoria_small_merged$bike_safety_1  n     percent
-##              Neither safe nor unsafe 22 0.145695364
-##                   Somewhat dangerous 26 0.172185430
-##                        Somewhat safe 89 0.589403974
-##                       Very dangerous  1 0.006622517
-##                            Very safe 13 0.086092715
+##  victoria_small_merged_1$bike_safety_1  n     percent
+##                Neither safe nor unsafe 20 0.134228188
+##                     Somewhat dangerous 26 0.174496644
+##                          Somewhat safe 89 0.597315436
+##                         Very dangerous  1 0.006711409
+##                              Very safe 13 0.087248322
 ```
 
 ```r
-victoria_small_merged$bike_safety_1 <- factor(victoria_small_merged$bike_safety_1, c( "Very safe", "Somewhat safe", "Neither safe nor unsafe", "Somewhat dangerous", "Very dangerous"))
-tabyl(victoria_small_merged$bike_safety_1)
+victoria_small_merged_1$bike_safety_1 <- factor(victoria_small_merged_1$bike_safety_1, c( "Very safe", "Somewhat safe", "Neither safe nor unsafe", "Somewhat dangerous", "Very dangerous"))
+tabyl(victoria_small_merged_1$bike_safety_1)
 ```
 
 ```
-##  victoria_small_merged$bike_safety_1  n     percent
-##                            Very safe 13 0.086092715
-##                        Somewhat safe 89 0.589403974
-##              Neither safe nor unsafe 22 0.145695364
-##                   Somewhat dangerous 26 0.172185430
-##                       Very dangerous  1 0.006622517
+##  victoria_small_merged_1$bike_safety_1  n     percent
+##                              Very safe 13 0.087248322
+##                          Somewhat safe 89 0.597315436
+##                Neither safe nor unsafe 20 0.134228188
+##                     Somewhat dangerous 26 0.174496644
+##                         Very dangerous  1 0.006711409
 ```
 
 ## Bike frequency by season
 
 ```r
-summary(victoria_small_merged$bike_freq_a)
+summary(victoria_small_merged_1$bike_freq_a)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    0.00   52.00   65.00   63.82   78.00   91.00
+##    0.00   52.00   65.00   63.89   78.00   91.00
 ```
 
 ```r
-sd(victoria_small_merged$bike_freq_a)
+sd(victoria_small_merged_1$bike_freq_a)
 ```
 
 ```
-## [1] 22.74294
+## [1] 22.87514
 ```
 
 ```r
-summary(victoria_small_merged$bike_freq_b)
+summary(victoria_small_merged_1$bike_freq_b)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-##    0.00   39.00   65.00   53.15   65.00   91.00       1
+##    0.00   39.00   65.00   53.51   65.00   91.00       1
 ```
 
 ```r
-sd(victoria_small_merged$bike_freq_b, na.rm = TRUE)
+sd(victoria_small_merged_1$bike_freq_b, na.rm = TRUE)
 ```
 
 ```
-## [1] 26.2521
+## [1] 26.19329
 ```
 
 ```r
-summary(victoria_small_merged$bike_freq_c)
+summary(victoria_small_merged_1$bike_freq_c)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##       0      52      65      66      78      91
+##     0.0    52.0    66.0    66.1    78.0    91.0
 ```
 
 ```r
-sd(victoria_small_merged$bike_freq_c)
+sd(victoria_small_merged_1$bike_freq_c)
 ```
 
 ```
-## [1] 22.00788
+## [1] 22.12579
 ```
 
 ```r
-summary(victoria_small_merged$bike_freq_d)
+summary(victoria_small_merged_1$bike_freq_d)
 ```
 
 ```
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-##   12.00   65.00   78.00   70.54   91.00   91.00       1
+##   12.00   65.00   78.00   70.53   91.00   91.00       1
 ```
 
 ```r
-sd(victoria_small_merged$bike_freq_d, na.rm = TRUE)
+sd(victoria_small_merged_1$bike_freq_d, na.rm = TRUE)
 ```
 
 ```
-## [1] 19.61462
+## [1] 19.73272
 ```
 
 ## Cycing infrastructure preference
 
 ```r
-tabyl(victoria_small_merged$path_comf)
+tabyl(victoria_small_merged_1$path_comf)
 ```
 
 ```
-##  victoria_small_merged$path_comf   n    percent
-##             Somewhat comfortable   9 0.05960265
-##                 Very comfortable 133 0.88079470
-##               Very uncomfortable   9 0.05960265
-```
-
-```r
-tabyl(victoria_small_merged$residential_street_comf)
-```
-
-```
-##  victoria_small_merged$residential_street_comf  n    percent
-##                           Somewhat comfortable 48 0.31788079
-##                         Somewhat uncomfortable  8 0.05298013
-##                               Very comfortable 84 0.55629139
-##                             Very uncomfortable 11 0.07284768
+##  victoria_small_merged_1$path_comf   n    percent
+##               Somewhat comfortable   9 0.06040268
+##                   Very comfortable 131 0.87919463
+##                 Very uncomfortable   9 0.06040268
 ```
 
 ```r
-tabyl(victoria_small_merged$res_street_traffic_calming_comf)
+tabyl(victoria_small_merged_1$residential_street_comf)
 ```
 
 ```
-##  victoria_small_merged$res_street_traffic_calming_comf   n     percent
-##                      I don't know/Prefer not to answer   1 0.006622517
-##                                   Somewhat comfortable  13 0.086092715
-##                                 Somewhat uncomfortable   2 0.013245033
-##                                       Very comfortable 124 0.821192053
-##                                     Very uncomfortable  11 0.072847682
-```
-
-```r
-tabyl(victoria_small_merged$major_street_no_bike_lane)
-```
-
-```
-##  victoria_small_merged$major_street_no_bike_lane  n    percent
-##                             Somewhat comfortable 24 0.15894040
-##                           Somewhat uncomfortable 54 0.35761589
-##                                 Very comfortable  5 0.03311258
-##                               Very uncomfortable 68 0.45033113
+##  victoria_small_merged_1$residential_street_comf  n    percent
+##                             Somewhat comfortable 48 0.32214765
+##                           Somewhat uncomfortable  8 0.05369128
+##                                 Very comfortable 82 0.55033557
+##                               Very uncomfortable 11 0.07382550
 ```
 
 ```r
-tabyl(victoria_small_merged$major_street_bike_lane)
+tabyl(victoria_small_merged_1$res_street_traffic_calming_comf)
 ```
 
 ```
-##  victoria_small_merged$major_street_bike_lane  n   percent
-##                          Somewhat comfortable 71 0.4701987
-##                        Somewhat uncomfortable 44 0.2913907
-##                              Very comfortable 20 0.1324503
-##                            Very uncomfortable 16 0.1059603
+##  victoria_small_merged_1$res_street_traffic_calming_comf   n     percent
+##                        I don't know/Prefer not to answer   1 0.006711409
+##                                     Somewhat comfortable  13 0.087248322
+##                                   Somewhat uncomfortable   2 0.013422819
+##                                         Very comfortable 122 0.818791946
+##                                       Very uncomfortable  11 0.073825503
+```
+
+```r
+tabyl(victoria_small_merged_1$major_street_no_bike_lane)
+```
+
+```
+##  victoria_small_merged_1$major_street_no_bike_lane  n    percent
+##                               Somewhat comfortable 23 0.15436242
+##                             Somewhat uncomfortable 54 0.36241611
+##                                   Very comfortable  5 0.03355705
+##                                 Very uncomfortable 67 0.44966443
+```
+
+```r
+tabyl(victoria_small_merged_1$major_street_bike_lane)
+```
+
+```
+##  victoria_small_merged_1$major_street_bike_lane  n   percent
+##                            Somewhat comfortable 70 0.4697987
+##                          Somewhat uncomfortable 43 0.2885906
+##                                Very comfortable 20 0.1342282
+##                              Very uncomfortable 16 0.1073826
 ```
 
