@@ -60,17 +60,17 @@ require(plyr)
 ```{r}
 victoria_small_merged_1 <- fread("victoria_small_merged_1.csv")
 
-power_victoria_merged <- fread("power_victoria_merged.csv") #big file with all summary counts
+power_victoria_merged_updated <- fread("power_victoria_merged_updated.csv") #big file with all summary counts
 table_of_power_merged_2 <- fread("table_of_power_merged_2.csv")
-summary_power_victoria_merged <- fread("summary_power_victoria_merged.csv") #summary table with summarized PA
+summary_power_victoria_merged_updated <- fread("summary_power_victoria_merged_updated.csv") #summary table with summarized PA
 ```
 
 ## Variables
 ```{r}
-power_victoria_merged$income_2 <- factor(power_victoria_merged$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+power_victoria_merged_updated$income_2 <- factor(power_victoria_merged_updated$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
 ```
 
-## Models
+## Traditional regression using lm function for survey data + plot
 ```{r}
 regression_1 <- lm(total_pa_met_formula ~ percent, data = victoria_small_merged_1)
 
@@ -86,7 +86,6 @@ ggplot(victoria_small_merged_1, aes(y = total_pa_met_formula, x = percent)) +
   geom_smooth(method = "lm")
 ```
 
-
 ## Regression Model with Survey Data
 ```{r}
 victoria_small_merged_1 <- victoria_small_merged_1 %>% 
@@ -97,8 +96,6 @@ dependent = "total_pa_met_formula"
 victoria_small_merged_1 %>% finalfit(dependent, explanatory) -> t1
 knitr::kable(t1, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
 
-
-
 lm_1 <- lm(total_pa_met_formula ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = victoria_small_merged_1)
 summary(lm_1)
 
@@ -106,46 +103,71 @@ victoria_small_merged_1$lm_fitted <- fitted(lm_1)
 
 #ggplot(data = lm_1, aes(fitted, model$total_pa_met_formula)) + 
          #geom_point()
-
 ```
 
-## Regression Model with summarry accelerometer data
+## Regression Model with summary accelerometer data
 ```{r}
-summary_power_victoria_merged <- summary_power_victoria_merged %>% 
+summary_power_victoria_merged_updated <- summary_power_victoria_merged_updated %>% 
                               mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
 explanatory = c("percent", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
 dependent = "total_pa"
-summary_power_victoria_merged %>% finalfit(dependent, explanatory) -> t2
+summary_power_victoria_merged_updated %>% finalfit(dependent, explanatory) -> t2
 knitr::kable(t2, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
 ```
 
-## Simple regression plot
+## Simple regression plot for summary accelerometer data
 ```{r}
-ggplot(summary_power_victoria_merged, aes(y = total_pa, x = percent)) + 
+ggplot(summary_power_victoria_merged_updated, aes(y = total_pa, x = percent)) + 
   geom_point() +
   geom_smooth(method = "lm")
 ```
 
 ## Regression Model with summary_counts as outcome variable - from accelerometer data
 ```{r}
-power_victoria_merged <- power_victoria_merged %>% 
+power_victoria_merged_updated <- power_victoria_merged_updated %>% 
                               mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
 explanatory = c("percent", "doy_1", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
 dependent = "summary_count"
-power_victoria_merged %>% finalfit(dependent, explanatory) -> t3
+power_victoria_merged_updated %>% finalfit(dependent, explanatory) -> t3
 knitr::kable(t3, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
 ```
 
-ng on making plots for regression
+## Making plots for regression - accelerometer data
 ```{r}
-pa_regression_1 <- lm(summary_count ~ percent,  data = power_victoria_merged)
+pa_regression_1 <- lm(summary_count ~ percent,  data = power_victoria_merged_updated)
 
 summary(pa_regression_1)
 lm.beta(pa_regression_1) ##This isn't working. 
 confint(pa_regression_1)
 
-ggplot(power_victoria_merged, aes(y = summary_count, x = percent)) + 
+ggplot(power_victoria_merged_updated, aes(y = summary_count, x = percent)) + 
   geom_point() +
   geom_smooth(method = "lm")
+```
+
+## Analyzing the regression data more closely 
+```{r}
+summary(power_victoria_merged_updated$summary_count)
+sd(power_victoria_merged_updated$summary_count, na.rm = TRUE)
+
+ggplot(power_victoria_merged_updated) + 
+                      geom_histogram(aes(summary_count))
+  
+```
+
+## Negative binomial regression with just percent and summary count
+```{r}
+nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_merged_updated)
+summary(nb_regression_1)
+
+power_victoria_merged <- fread("power_victoria_merged.csv")
+nb_regression_old <- glm.nb(summary_count ~ percent, data = power_victoria_merged)
+summary(nb_regression_old)
+```
+
+## Negative binomial regression with all predictors
+```{r}
+nb_regression_2 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_merged_updated)
+summary(nb_regression_2)
 ```
 

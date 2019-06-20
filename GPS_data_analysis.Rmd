@@ -316,6 +316,8 @@ fwrite(wear_time_stamps_filtered, "wear_time_stamps_updated_final.csv", sep = ",
 ```{r}
 table_of_power <- read_csv("victoria_top_minute.csv")
 
+table_of_power_updated <- read_csv("victoria_top_1min.csv")
+
 doy_start_end_filtered <- read_csv("doy_start_end_filtered.csv")
 doy_start_end_final <- doy_start_end_filtered %>% dplyr::select("interact_id", "gps_id", "doy_start", "doy_end")
 
@@ -328,66 +330,65 @@ wear_time_stamps_updated_final <- read_csv("wear_time_stamps_updated_final.csv")
 
 ## Adding day of year from UTC date to table of power
 ```{r}
-table_of_power <- table_of_power %>% mutate(doy_1 = lubridate::yday(ymd_hms(substr(table_of_power$utc_date, 1, 19))))
+table_of_power_updated <- table_of_power_updated %>% mutate(doy_1 = lubridate::yday(ymd_hms(substr(table_of_power_updated$utc_date, 1, 19))))
 
-table_of_power <- table_of_power %>% mutate(interact_id = inter_id)
+table_of_power_updated <- table_of_power_updated %>% mutate(interact_id = inter_id)
 
-table_of_power_merged <- left_join(table_of_power, doy_start_end_final, by = "interact_id")
+table_of_power_updated_merged <- left_join(table_of_power_updated, doy_start_end_final, by = "interact_id")
 ```
 
 ## Filtering to get new table of power file with correct dates and number of points
 ```{r}
-table_of_power_merged_1 <- table_of_power_merged %>% group_by(interact_id, doy_1) %>% 
+table_of_power_merged_updated_1 <- table_of_power_updated_merged %>% group_by(interact_id, doy_1) %>% 
   filter(doy_1 >= doy_start) %>% filter(doy_1 <= doy_end) 
 
-table_of_power_merged_1 <- table_of_power_merged_1 %>% mutate(n_points = 1)
+table_of_power_merged_updated_1 <- table_of_power_merged_updated_1 %>% mutate(n_points = 1)
 #adding a point to each row to allow for sum of points per day to filter again
 
-table_of_power_merged_1 <- table_of_power_merged_1 %>% group_by(interact_id, doy_1) %>%
+table_of_power_merged_updated_1 <- table_of_power_merged_updated_1 %>% group_by(interact_id, doy_1) %>%
    dplyr::mutate(day_points = sum(n_points))
 
 
-tabyl(table_of_power_merged_1$day_points)
-table_of_power_merged_2 <- table_of_power_merged_1 %>% filter(day_points > 125)
+tabyl(table_of_power_merged_updated_1$day_points)
+table_of_power_merged_updated_2 <- table_of_power_merged_updated_1 %>% filter(day_points > 125)
 #filtering entire data frame for points greater than 7500 seconds or 125 minutes  
 ```
 
 ## New table with PA by day
 ```{r}
-table_of_power_merged_2 <- table_of_power_merged_2 %>% group_by(interact_id, doy_1) %>%
+table_of_power_merged_updated_2 <- table_of_power_merged_updated_2 %>% group_by(interact_id, doy_1) %>%
   dplyr::mutate(day_sedentary = sum(activity_levels == "Sedentary"), 
                 day_light = sum(activity_levels == "Light"),
                 day_moderate = sum(activity_levels == "Moderate"),
                 day_vigorous = sum(activity_levels == "Vigorous"))
 
-write_csv(table_of_power_merged_2, "table_of_power_merged_2.csv")
+write_csv(table_of_power_merged_updated_2, "table_of_power_merged_updated_2.csv")
 
-
-
-table_of_power_merged_3 <- table_of_power_merged_2 %>% group_by(interact_id, doy_1) %>% 
-  summarise(day_sedentary = first(day_sedentary), 
+table_of_power_merged_updated_3 <- table_of_power_merged_updated_2 %>% group_by(interact_id, doy_1) %>% 
+     dplyr::summarise(day_sedentary = first(day_sedentary), 
             day_light = first(day_light), 
             day_moderate = first(day_moderate), 
             day_vigorous = first(day_vigorous))
 
-table_of_power_merged_3 <- table_of_power_merged_3 %>% group_by(interact_id) %>%
-  mutate(total_sedentary = sum(day_sedentary), 
+
+table_of_power_merged_updated_3 <- table_of_power_merged_updated_3 %>% group_by(interact_id) %>%
+  dplyr::mutate(total_sedentary = sum(day_sedentary), 
          total_light = sum(day_light), 
          total_moderate = sum(day_moderate), 
          total_vigorous = sum(day_vigorous))
 
-table_of_power_merged_3 <- table_of_power_merged_3 %>% group_by(interact_id) %>%
-  mutate(total_pa = total_light + total_moderate + total_vigorous)
+table_of_power_merged_updated_3 <- table_of_power_merged_updated_3 %>% group_by(interact_id) %>%
+  dplyr::mutate(total_pa = total_light + total_moderate + total_vigorous)
 
-write_csv(table_of_power_merged_3, "table_of_power_merged_3.csv")
+write_csv(table_of_power_merged_updated_3, "table_of_power_merged_updated_3.csv")
 ```
 
 ## Small data frame table
 ```{r}
-table_of_power_merged_4 <- table_of_power_merged_3 %>% dplyr::select("interact_id", "total_sedentary", "total_light", "total_moderate", "total_vigorous", "total_pa") %>% 
+table_of_power_merged_updated_4 <- table_of_power_merged_updated_3 %>% dplyr::select("interact_id", "total_sedentary", "total_light", "total_moderate", "total_vigorous", "total_pa") %>% 
   distinct(interact_id, .keep_all = TRUE)
 
-write_csv(table_of_power_merged_4, "table_of_power_merged_4.csv")
+write_csv(table_of_power_merged_updated_4, "table_of_power_merged_updated_4.csv")
 ```
 
 ## Reading in victoria_small_merged
@@ -400,10 +401,10 @@ table_of_power_merged_4 <- read_csv("table_of_power_merged_4.csv")
 
 
 
-power_victoria_merged <- full_join(table_of_power_merged_2, victoria_small_merged_1, by = "interact_id") #update once I get new table of power. 
-write_csv(power_victoria_merged, "power_victoria_merged.csv")
-summary_power_victoria_merged <- full_join(table_of_power_merged_4, victoria_small_merged_1, by = "interact_id") #update once you get new table of power
-write_csv(summary_power_victoria_merged, "summary_power_victoria_merged.csv")
+power_victoria_merged_updated <- full_join(table_of_power_merged_updated_2, victoria_small_merged_1, by = "interact_id") #update once I get new table of power. 
+write_csv(power_victoria_merged_updated, "power_victoria_merged_updated.csv")
+summary_power_victoria_merged_updated <- full_join(table_of_power_merged_updated_4, victoria_small_merged_1, by = "interact_id") #update once you get new table of power
+write_csv(summary_power_victoria_merged_updated, "summary_power_victoria_merged_updated.csv")
 ```
 
 
