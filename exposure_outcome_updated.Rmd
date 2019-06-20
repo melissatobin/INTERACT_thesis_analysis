@@ -152,6 +152,55 @@ PA_total_and_cycling <- dplyr::select(victoria_gps_only_merged_updated, "interac
 write_csv(PA_total_and_cycling, "PA_total_and_cycling.csv")
 ```
 
+## Filtering for file with just SD Days 
+```{r}
+doy_start_end_final <- doy_start_end_filtered %>% dplyr::select("interact_id", "gps_id", "doy_start", "doy_end")
+
+victoria_gps_only_merged_updated_1 <- left_join(victoria_gps_only_merged_updated, doy_start_end_final, by = "interact_id")
+write_csv(victoria_gps_only_merged_updated_1, "victoria_gps_only_merged_updated_1.csv")
+```
+
+## Reducing Data frame into a more manageable file
+```{r}
+victoria_small <- victoria_gps_only_merged_updated_1 %>% dplyr::select("interact_id", "sensedoc_ID", "ethica_ID", "gps_id.x", "residence_cp", "age_calculated", "age_categories", "gender", "health_status", "marital", "income_1", "income_2", "income_satisfy", "ethnicity", "born_canada", "children_1", "car_access", "transp_bikes_adults", "bike_safety",  "bike_freq_a", "bike_freq_b", "bike_freq_c", "bike_freq_d", "path_comf", "residential_street_comf", "res_street_traffic_calming_comf", "major_street_no_bike_lane", "major_street_bike_lane", "major_street_separated_bike_lane", "aaa_familiarity_1", "aaa_idea_1", "aaa_bike_more_1", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent", "doy_start", "doy_end")
+
+write_csv(victoria_small, "victoria_small.csv")
+
+##merging summary time stamps with victoria small
+
+victoria_small_merged <- left_join(victoria_small, summary_wear_stamps, by = "interact_id")
+
+write_csv(victoria_small_merged, "victoria_small_merged.csv")
+```
+
+## Recoding and ordering variables for regression 
+```{r}
+victoria_small_merged <- victoria_small_merged %>% mutate(ethnicity_updated = case_when(
+  ethnicity == "Caucasian" ~ "Caucasian",
+  ethnicity == "Aboriginal" ~ "Racialized Group",
+  ethnicity == "Asian" ~ "Racialized Group",
+ ethnicity == "Latin American" ~ "Racialized Group",
+  ethnicity == "Unknown" ~ "Racialized Group",
+))
+
+victoria_small_merged$income_2 <- factor(victoria_small_merged$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+
+victoria_small_merged <- victoria_small_merged %>% mutate(gender_updated = case_when(
+  gender == "Women" ~ "Women",
+  gender == "Men" ~ "Men"
+)) 
+tabyl(victoria_small_merged$gender_updated)
+
+victoria_small_merged <- victoria_small_merged %>% mutate (gender_check = case_when(
+  gender == "Women" ~ 1,
+  gender == "Men" ~ 1
+))
+
+victoria_small_merged_1 <- filter(victoria_small_merged, gender_check == 1) 
+
+write_csv(victoria_small_merged_1, "victoria_small_merged_1.csv")
+```
+
 ##Plotting exposure 
 ```{r}
 exposure_plot <- ggplot(victoria_small_merged_1) + 
@@ -188,55 +237,6 @@ cycling_plot <- ggplot(PA_total_and_cycling) +
                       geom_histogram(aes(Cycling_formula))
                 
 plot(cycling_plot)
-```
-
-## Filtering for file with just SD Days 
-```{r}
-doy_start_end_final <- doy_start_end_filtered %>% dplyr::select("interact_id", "gps_id", "doy_start", "doy_end")
-
-victoria_gps_only_merged_updated_1 <- left_join(victoria_gps_only_merged_updated, doy_start_end_final, by = "interact_id")
-write_csv(victoria_gps_only_merged_updated_1, "victoria_gps_only_merged_updated_1.csv")
-```
-
-## Reducing Data frame into a more manageable file
-```{r}
-victoria_small <- victoria_gps_only_merged_updated_1 %>% dplyr::select("interact_id", "sensedoc_ID", "ethica_ID", "gps_id.x", "residence_cp", "age_calculated", "age_categories", "gender", "health_status", "marital", "income_1", "income_2", "income_satisfy", "ethnicity", "born_canada", "children_1", "car_access", "transp_bikes_adults", "bike_safety",  "bike_freq_a", "bike_freq_b", "bike_freq_c", "bike_freq_d", "path_comf", "residential_street_comf", "res_street_traffic_calming_comf", "major_street_no_bike_lane", "major_street_bike_lane", "major_street_separated_bike_lane", "aaa_familiarity_1", "aaa_idea_1", "aaa_bike_more_1", "Cycling_formula", "total_pa_met_formula", "proportion_PA", "total_points", "exposure_points", "amount", "percent", "doy_start", "doy_end")
-
-write_csv(victoria_small, "victoria_small.csv")
-
-##merging summary time stamps with victoria small
-
-victoria_small_merged <- left_join(victoria_small, summary_wear_stamps, by = "interact_id")
-
-write_csv(victoria_small_merged, "victoria_small_merged.csv")
-```
-
-## Recoding and ordering variables for regression 
-```{r}
-victoria_small_merged <- victoria_small_merged %>% mutate(ethnicity_updated = case_when(
-  ethnicity == "Caucasian" ~ "Caucasian",
-  ethnicity == "Aboriginal" ~ "Other",
-  ethnicity == "Asian" ~ "Other",
- ethnicity == "Latin American" ~ "Other",
-  ethnicity == "Unknown" ~ "Other",
-))
-
-victoria_small_merged$income_2 <- factor(victoria_small_merged$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
-
-victoria_small_merged <- victoria_small_merged %>% mutate(gender_updated = case_when(
-  gender == "Women" ~ "Women",
-  gender == "Men" ~ "Men"
-)) 
-tabyl(victoria_small_merged$gender_updated)
-
-victoria_small_merged <- victoria_small_merged %>% mutate (gender_check = case_when(
-  gender == "Women" ~ 1,
-  gender == "Men" ~ 1
-))
-
-victoria_small_merged_1 <- filter(victoria_small_merged, gender_check == 1) 
-
-write_csv(victoria_small_merged_1, "victoria_small_merged_1.csv")
 ```
 
 ## GPS Wear Time 

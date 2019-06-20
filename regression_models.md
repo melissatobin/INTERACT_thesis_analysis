@@ -400,124 +400,60 @@ library(anytime)
 library(stringr)
 library(stringi)
 library(finalfit)
+library(data.table)
+```
+
+```
+## 
+## Attaching package: 'data.table'
+```
+
+```
+## The following objects are masked from 'package:lubridate':
+## 
+##     hour, isoweek, mday, minute, month, quarter, second, wday,
+##     week, yday, year
+```
+
+```
+## The following object is masked from 'package:raster':
+## 
+##     shift
+```
+
+```
+## The following objects are masked from 'package:pastecs':
+## 
+##     first, last
+```
+
+```
+## The following objects are masked from 'package:dplyr':
+## 
+##     between, first, last
+```
+
+```
+## The following object is masked from 'package:purrr':
+## 
+##     transpose
 ```
 
 ## Reading in data
 
 ```r
-victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
+victoria_small_merged_1 <- fread("victoria_small_merged_1.csv")
+
+power_victoria_merged <- fread("power_victoria_merged.csv") #big file with all summary counts
+table_of_power_merged_2 <- fread("table_of_power_merged_2.csv")
+summary_power_victoria_merged <- fread("summary_power_victoria_merged.csv") #summary table with summarized PA
 ```
 
-```
-## Parsed with column specification:
-## cols(
-##   .default = col_character(),
-##   interact_id = col_integer(),
-##   gps_id.x = col_integer(),
-##   age_calculated = col_integer(),
-##   car_access = col_integer(),
-##   transp_bikes_adults = col_integer(),
-##   bike_safety = col_integer(),
-##   bike_freq_a = col_integer(),
-##   bike_freq_b = col_integer(),
-##   bike_freq_c = col_integer(),
-##   bike_freq_d = col_integer(),
-##   Cycling_formula = col_integer(),
-##   total_pa_met_formula = col_double(),
-##   proportion_PA = col_double(),
-##   total_points = col_integer(),
-##   exposure_points = col_integer(),
-##   amount = col_double(),
-##   percent = col_double(),
-##   doy_start = col_integer(),
-##   doy_end = col_integer(),
-##   total_hours = col_double()
-##   # ... with 5 more columns
-## )
-```
-
-```
-## See spec(...) for full column specifications.
-```
+## Variables
 
 ```r
-power_victoria_merged <- read_csv("power_victoria_merged.csv") #big file with all summary counts
+power_victoria_merged$income_2 <- factor(power_victoria_merged$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
 ```
-
-```
-## Parsed with column specification:
-## cols(
-##   .default = col_integer(),
-##   utc_date = col_datetime(format = ""),
-##   x = col_double(),
-##   y = col_double(),
-##   z = col_double(),
-##   lon = col_double(),
-##   lat = col_double(),
-##   speed = col_double(),
-##   alt = col_double(),
-##   northing = col_double(),
-##   easting = col_double(),
-##   zone = col_character(),
-##   summary_count = col_double(),
-##   activity_levels = col_character(),
-##   gender.x = col_character(),
-##   sensedoc_ID = col_character(),
-##   residence_cp = col_character(),
-##   age_categories = col_character(),
-##   gender.y = col_character(),
-##   health_status = col_character(),
-##   marital = col_character()
-##   # ... with 24 more columns
-## )
-## See spec(...) for full column specifications.
-```
-
-```
-## Warning in rbind(names(probs), probs_f): number of columns of result is not
-## a multiple of vector length (arg 1)
-```
-
-```
-## Warning: 499877 parsing failures.
-## row # A tibble: 5 x 5 col     row col       expected   actual file                        expected   <int> <chr>     <chr>      <chr>  <chr>                       actual 1  7528 ethica_ID an integer NA - 3 'power_victoria_merged.csv' file 2  7529 ethica_ID an integer NA - 3 'power_victoria_merged.csv' row 3  7530 ethica_ID an integer NA - 3 'power_victoria_merged.csv' col 4  7531 ethica_ID an integer NA - 3 'power_victoria_merged.csv' expected 5  7532 ethica_ID an integer NA - 3 'power_victoria_merged.csv'
-## ... ................. ... ............................................................... ........ ............................................................... ...... ............................................................... .... ............................................................... ... ............................................................... ... ............................................................... ........ ...............................................................
-## See problems(...) for more details.
-```
-
-```r
-summary_power_victoria_merged <- read_csv("summary_power_victoria_merged.csv") #summary table with summarized PA
-```
-
-```
-## Parsed with column specification:
-## cols(
-##   .default = col_character(),
-##   interact_id = col_integer(),
-##   total_sedentary = col_integer(),
-##   total_light = col_integer(),
-##   total_moderate = col_integer(),
-##   total_vigorous = col_integer(),
-##   total_pa = col_integer(),
-##   gps_id.x = col_integer(),
-##   age_calculated = col_integer(),
-##   car_access = col_integer(),
-##   transp_bikes_adults = col_integer(),
-##   bike_safety = col_integer(),
-##   bike_freq_a = col_integer(),
-##   bike_freq_b = col_integer(),
-##   bike_freq_c = col_integer(),
-##   bike_freq_d = col_integer(),
-##   Cycling_formula = col_integer(),
-##   total_pa_met_formula = col_double(),
-##   proportion_PA = col_double(),
-##   total_points = col_integer(),
-##   exposure_points = col_integer()
-##   # ... with 10 more columns
-## )
-## See spec(...) for full column specifications.
-```
-
 
 ## Models
 
@@ -604,7 +540,7 @@ age_categories                    20-29                                5469.7 (4
                                   50-59                                6324.2 (5761.1)    854.50 (-1763.44 to 3472.43, p=0.520)    1926.94 (-930.83 to 4784.72, p=0.185)
                                   60+                                  6284.1 (4786.1)    814.38 (-1707.59 to 3336.36, p=0.524)    1675.65 (-952.88 to 4304.18, p=0.210)
 ethnicity_updated                 Caucasian                            4801.4 (4453.8)                                        -                                        -
-                                  Other                                4944.6 (4872.6)    143.23 (-2149.00 to 2435.46, p=0.902)    201.37 (-2081.94 to 2484.67, p=0.862)
+                                  Racialized Group                     4944.6 (4872.6)    143.23 (-2149.00 to 2435.46, p=0.902)    201.37 (-2081.94 to 2484.67, p=0.862)
 income_2                          $100,000 to $149,999                 3453.4 (2930.8)                                        -                                        -
                                   $150,000 or more                     4299.2 (4424.3)    845.79 (-1441.10 to 3132.69, p=0.466)    702.12 (-1676.66 to 3080.89, p=0.560)
                                   $49,000 or less                      7421.6 (5408.0)    3968.13 (1738.37 to 6197.90, p=0.001)    3500.24 (1023.14 to 5977.34, p=0.006)
@@ -638,7 +574,7 @@ summary(lm_1)
 ## age_categories40-49                        -396.945   1384.201  -0.287
 ## age_categories50-59                        1926.944   1445.006   1.334
 ## age_categories60+                          1675.649   1329.088   1.261
-## ethnicity_updatedOther                      201.368   1154.529   0.174
+## ethnicity_updatedRacialized Group           201.368   1154.529   0.174
 ## income_2$150,000 or more                    702.116   1202.803   0.584
 ## income_2$49,000 or less                    3500.241   1252.519   2.795
 ## income_2$50,000 to $99,999                  868.011    969.365   0.895
@@ -653,7 +589,7 @@ summary(lm_1)
 ## age_categories40-49                        0.77473   
 ## age_categories50-59                        0.18461   
 ## age_categories60+                          0.20957   
-## ethnicity_updatedOther                     0.86180   
+## ethnicity_updatedRacialized Group          0.86180   
 ## income_2$150,000 or more                   0.56037   
 ## income_2$49,000 or less                    0.00595 **
 ## income_2$50,000 to $99,999                 0.37214   
@@ -735,24 +671,24 @@ knitr::kable(t3, row.names = FALSE, align = c("l", "l", "r", "r", "r"))
 
 
 
-Dependent: summary_count                                             Mean (sd)            Coefficient (univariable)          Coefficient (multivariable)
--------------------------  ----------------------------------  ---------------  -----------------------------------  -----------------------------------
-percent                    [0,62.6]                             815.5 (1367.6)      -0.31 (-0.60 to -0.02, p=0.036)      -0.38 (-0.68 to -0.07, p=0.015)
-doy_1                      [151,336]                            822.3 (1369.5)         0.06 (0.01 to 0.11, p=0.029)         0.56 (0.49 to 0.64, p<0.001)
-gender_updated             Men                                  803.4 (1416.2)                                    -                                    -
-                           Women                                826.8 (1321.0)      23.35 (18.10 to 28.60, p<0.001)      26.60 (21.19 to 32.01, p<0.001)
-age_categories             20-29                                849.4 (1459.8)                                    -                                    -
-                           30-39                                772.4 (1314.1)   -76.97 (-85.96 to -67.98, p<0.001)   -41.14 (-50.91 to -31.38, p<0.001)
-                           40-49                                796.6 (1343.0)   -52.80 (-62.03 to -43.57, p<0.001)   -23.87 (-34.16 to -13.57, p<0.001)
-                           50-59                                930.6 (1594.2)      81.25 (71.46 to 91.04, p<0.001)   119.36 (108.79 to 129.92, p<0.001)
-                           60+                                  780.0 (1200.0)   -69.32 (-78.58 to -60.07, p<0.001)   -79.90 (-89.55 to -70.25, p<0.001)
-ethnicity_updated          Caucasian                            821.1 (1386.1)                                    -                                    -
-                           Other                                770.5 (1205.7)   -50.61 (-59.01 to -42.21, p<0.001)   -59.27 (-68.02 to -50.51, p<0.001)
-income_2                   $100,000 to $149,999                 789.5 (1364.6)                                    -                                    -
-                           $150,000 or more                     814.2 (1316.6)      24.73 (16.37 to 33.10, p<0.001)    -18.34 (-27.20 to -9.47, p<0.001)
-                           $49,000 or less                      896.9 (1378.8)    107.40 (99.16 to 115.64, p<0.001)      70.80 (61.58 to 80.01, p<0.001)
-                           $50,000 to $99,999                   769.4 (1348.5)   -20.06 (-26.93 to -13.19, p<0.001)   -46.31 (-53.59 to -39.04, p<0.001)
-                           I don't know/Prefer not to answer    929.8 (1518.2)   140.30 (129.52 to 151.07, p<0.001)   138.97 (127.66 to 150.28, p<0.001)
-mean_temp_date             [4.03,19.2]                          815.5 (1367.6)         5.48 (4.74 to 6.21, p<0.001)      15.84 (14.52 to 17.17, p<0.001)
-total_precip_date          [0,124]                              815.5 (1367.6)      -0.85 (-0.95 to -0.76, p<0.001)         0.25 (0.10 to 0.39, p=0.001)
+Dependent: summary_count                                             Mean (sd)               Coefficient (univariable)             Coefficient (multivariable)
+-------------------------  ----------------------------------  ---------------  --------------------------------------  --------------------------------------
+percent                    [0,62.6]                             815.5 (1367.6)         -0.31 (-0.60 to -0.02, p=0.036)         -0.38 (-0.68 to -0.07, p=0.015)
+doy_1                      [151,336]                            822.3 (1369.5)            0.06 (0.01 to 0.11, p=0.029)            0.56 (0.49 to 0.64, p<0.001)
+gender_updated             Men                                  803.4 (1416.2)                                       -                                       -
+                           Women                                826.8 (1321.0)         23.35 (18.10 to 28.60, p<0.001)         26.60 (21.19 to 32.01, p<0.001)
+age_categories             20-29                                849.4 (1459.8)                                       -                                       -
+                           30-39                                772.4 (1314.1)      -76.97 (-85.96 to -67.98, p<0.001)      -41.14 (-50.91 to -31.38, p<0.001)
+                           40-49                                796.6 (1343.0)      -52.80 (-62.03 to -43.57, p<0.001)      -23.87 (-34.16 to -13.57, p<0.001)
+                           50-59                                930.6 (1594.2)         81.25 (71.46 to 91.04, p<0.001)      119.36 (108.79 to 129.92, p<0.001)
+                           60+                                  780.0 (1200.0)      -69.32 (-78.58 to -60.07, p<0.001)      -79.90 (-89.55 to -70.25, p<0.001)
+ethnicity_updated          Caucasian                            821.1 (1386.1)                                       -                                       -
+                           Racialized Group                     770.5 (1205.7)      -50.61 (-59.01 to -42.21, p<0.001)      -59.27 (-68.02 to -50.51, p<0.001)
+income_2                   $49,000 or less                      896.9 (1378.8)                                       -                                       -
+                           $50,000 to $99,999                   769.4 (1348.5)   -127.46 (-135.26 to -119.66, p<0.001)   -117.11 (-125.32 to -108.90, p<0.001)
+                           $100,000 to $149,999                 789.5 (1364.6)    -107.40 (-115.64 to -99.16, p<0.001)      -70.80 (-80.01 to -61.58, p<0.001)
+                           $150,000 or more                     814.2 (1316.6)      -82.67 (-91.81 to -73.52, p<0.001)      -89.13 (-99.31 to -78.96, p<0.001)
+                           I don't know/Prefer not to answer    929.8 (1518.2)         32.90 (21.50 to 44.29, p<0.001)         68.17 (56.05 to 80.29, p<0.001)
+mean_temp_date             [4.03,19.2]                          815.5 (1367.6)            5.48 (4.74 to 6.21, p<0.001)         15.84 (14.52 to 17.17, p<0.001)
+total_precip_date          [0,124]                              815.5 (1367.6)         -0.85 (-0.95 to -0.76, p<0.001)            0.25 (0.10 to 0.39, p=0.001)
 
