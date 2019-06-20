@@ -49,6 +49,11 @@ library(stringr)
 library(stringi)
 library(finalfit)
 library(data.table)
+install.packages("devtools")
+devtools::install_github("cardiomoon/ggiraphExtra")
+require(ggiraph)
+require(ggiraphExtra)
+require(plyr)
 ```
 
 ## Reading in data
@@ -72,7 +77,13 @@ regression_1 <- lm(total_pa_met_formula ~ percent, data = victoria_small_merged_
 summary(regression_1)
 lm.beta(regression_1) ##This isn't working. 
 confint(regression_1)
-#plot(regression_1)
+#plot(regression_1
+
+ggPredict(regression_1, se = TRUE, interactive = TRUE)
+
+ggplot(victoria_small_merged_1, aes(y = total_pa_met_formula, x = percent)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
 ```
 
 
@@ -108,6 +119,13 @@ summary_power_victoria_merged %>% finalfit(dependent, explanatory) -> t2
 knitr::kable(t2, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
 ```
 
+## Simple regression plot
+```{r}
+ggplot(summary_power_victoria_merged, aes(y = total_pa, x = percent)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
 ## Regression Model with summary_counts as outcome variable - from accelerometer data
 ```{r}
 power_victoria_merged <- power_victoria_merged %>% 
@@ -116,5 +134,18 @@ explanatory = c("percent", "doy_1", "gender_updated", "age_categories", "ethnici
 dependent = "summary_count"
 power_victoria_merged %>% finalfit(dependent, explanatory) -> t3
 knitr::kable(t3, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
+```
+
+ng on making plots for regression
+```{r}
+pa_regression_1 <- lm(summary_count ~ percent,  data = power_victoria_merged)
+
+summary(pa_regression_1)
+lm.beta(pa_regression_1) ##This isn't working. 
+confint(pa_regression_1)
+
+ggplot(power_victoria_merged, aes(y = summary_count, x = percent)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
 ```
 
