@@ -68,6 +68,10 @@ summary_power_victoria_merged_updated <- fread("summary_power_victoria_merged_up
 ## Variables
 ```{r}
 power_victoria_merged_updated$income_2 <- factor(power_victoria_merged_updated$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+
+tabyl(power_victoria_merged_updated$gender_check)
+
+power_victoria_merged_filtered <- power_victoria_merged_updated %>% filter(gender_check == 1)
 ```
 
 ## Traditional regression using lm function for survey data + plot
@@ -124,40 +128,43 @@ ggplot(summary_power_victoria_merged_updated, aes(y = total_pa, x = percent)) +
 
 ## Regression Model with summary_counts as outcome variable - from accelerometer data
 ```{r}
-power_victoria_merged_updated <- power_victoria_merged_updated %>% 
+power_victoria_merged_filtered <- power_victoria_merged_filtered %>% 
                               mutate_at(vars(income_2, age_categories, ethnicity_updated), as.factor)
 explanatory = c("percent", "doy_1", "gender_updated", "age_categories", "ethnicity_updated", "income_2", "mean_temp_date", "total_precip_date")
 dependent = "summary_count"
-power_victoria_merged_updated %>% finalfit(dependent, explanatory) -> t3
+power_victoria_merged_filtered %>% finalfit(dependent, explanatory) -> t3
 knitr::kable(t3, row.names = FALSE, align = c("l", "l", "r", "r", "r")) 
 ```
 
 ## Making plots for regression - accelerometer data
 ```{r}
-pa_regression_1 <- lm(summary_count ~ percent,  data = power_victoria_merged_updated)
+pa_regression_1 <- lm(summary_count ~ percent,  data = power_victoria_merged_filtered)
 
 summary(pa_regression_1)
 lm.beta(pa_regression_1) ##This isn't working. 
 confint(pa_regression_1)
 
-ggplot(power_victoria_merged_updated, aes(y = summary_count, x = percent)) + 
+ggplot(power_victoria_merged_filtered, aes(y = summary_count, x = percent)) + 
   geom_point() +
   geom_smooth(method = "lm")
 ```
 
 ## Analyzing the regression data more closely 
 ```{r}
-summary(power_victoria_merged_updated$summary_count)
-sd(power_victoria_merged_updated$summary_count, na.rm = TRUE)
-
-ggplot(power_victoria_merged_updated) + 
-                      geom_histogram(aes(summary_count))
-  
+summary(power_victoria_merged_filtered$summary_count)
+sd(power_victoria_merged_filtered$summary_count, na.rm = TRUE)
+describeBy(power_victoria_merged_filtered$summary_count)
+summary_counts_plot <- ggplot(power_victoria_merged_filtered) + 
+                          geom_histogram(aes(summary_count), bins = 50) +
+                            labs(title = "Accelerometer Activity Counts",
+                             x = "Activity Count",
+                             y = "Number of Counts (n)")
+plot(summary_counts_plot)
 ```
 
 ## Negative binomial regression with just percent and summary count
 ```{r}
-nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_merged_updated)
+nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_merged_filtered)
 summary(nb_regression_1)
 
 power_victoria_merged <- fread("power_victoria_merged.csv")
@@ -167,7 +174,30 @@ summary(nb_regression_old)
 
 ## Negative binomial regression with all predictors
 ```{r}
-nb_regression_2 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_merged_updated)
+nb_regression_2 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_merged_filtered)
 summary(nb_regression_2)
 ```
+
+## Negative binomial regression with filtered summary count data
+```{r}
+summary_count <- tabyl(power_victoria_merged_filtered$summary_count)
+tail(summary_count$`power_victoria_merged_filtered$summary_count`)
+
+filtered_power <- power_victoria_merged_filtered %>% filter(summary_count <= 10000)
+
+filtered_counts_plot <- ggplot(filtered_power) + 
+                          geom_density(aes(summary_count), bins = 50)
+
+plot(filtered_counts_plot)
+
+nb_regression_filtered <- glm.nb(summary_count ~ percent, data = filtered_power)
+summary(nb_regression_filtered)
+
+nb_regression_2_filtered <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = filtered_power)
+summary(nb_regression_2_filtered)
+
+summary(filtered_power$summary_count)
+sd(filtered_power$summary_count)
+```
+
 
