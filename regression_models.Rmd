@@ -72,6 +72,8 @@ power_victoria_merged_updated$income_2 <- factor(power_victoria_merged_updated$i
 tabyl(power_victoria_merged_updated$gender_check)
 
 power_victoria_merged_filtered <- power_victoria_merged_updated %>% filter(gender_check == 1)
+
+write_csv(power_victoria_merged_filtered, "power_victoria_merged_filtered.csv")
 ```
 
 ## Traditional regression using lm function for survey data + plot
