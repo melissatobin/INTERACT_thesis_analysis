@@ -76,6 +76,9 @@ power_victoria_merged_filtered <- power_victoria_merged_updated %>% filter(gende
 write_csv(power_victoria_merged_filtered, "power_victoria_merged_filtered.csv")
 
 tabyl(power_victoria_merged_filtered$summary_count)
+
+summary_power_victoria_merged_filtered <- summary_power_victoria_merged_updated %>% filter(gender_check == 1)
+write_csv(summary_power_victoria_merged_filtered, "summary_power_victoria_merged_filtered.csv")
 ```
 
 ## Traditional regression using lm function for survey data + plot

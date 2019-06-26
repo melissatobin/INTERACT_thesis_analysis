@@ -1,0 +1,128 @@
+---
+title: "gender_analysis"
+author: "Melissa Tobin"
+date: "26/06/2019"
+output:   
+  html_document:
+        keep_md: true
+---
+
+```{r setup, include=FALSE}
+chooseCRANmirror(graphics = FALSE, ind = 1)
+knitr::opts_chunk$set(echo = TRUE)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+
+```
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+library(data.table)
+```
+
+## Plotting self-report PA by gender
+```{r}
+victoria_new_ID_gps <- read_csv("victoria_new_ID_gps.csv")
+
+tabyl(victoria_new_ID_gps$gender)
+ 
+PA_plot <- ggplot (data = victoria_new_ID_gps, aes(total_pa_met_formula)) + 
+    geom_density(aes(fill = gender), position = "dodge", alpha = 0.5) + 
+      labs(title = "Overall Physical Activity", 
+          x = "Total MET Minutes of Physical Activity", 
+          y = "Percent of Participants")
+plot(PA_plot)
+```
+
+## Plotting activity count PA by gender
+
+```{r}
+power_victoria_merged_filtered <- fread("power_victoria_merged_filtered.csv")
+
+activity_count_plot <- ggplot (data = power_victoria_merged_filtered, aes(summary_count)) + 
+    geom_density(aes(fill = gender_updated), position = "dodge", alpha = 0.5) + 
+      labs(title = "Activity Count Accelerometer Physical Activity", 
+          x = "Activity Count", 
+          y = "Percent of Participants")
+plot(activity_count_plot)
+```
+
+## Plotting summary PA by gender
+```{r}
+summary_power_victoria_merged_filtered <- fread("summary_power_victoria_merged_filtered.csv")
+
+summary_activity_count_plot <- ggplot (data = summary_power_victoria_merged_filtered, aes(total_pa)) + 
+    geom_density(aes(fill = gender_updated), position = "dodge", alpha = 0.5) + 
+      labs(title = "Summary Accelerometer Physical Activity", 
+          x = "Activity Count", 
+          y = "Percent of Participants")
+plot(summary_activity_count_plot)
+```
+
+## Plotting Moderate PA by gender
+```{r}
+moderate_pa_plot <- ggplot (data = summary_power_victoria_merged_filtered, aes(total_moderate)) + 
+    geom_density(aes(fill = gender_updated), position = "dodge", alpha = 0.5) + 
+      labs(title = "Summary Accelerometer Physical Activity", 
+          x = "Activity Count", 
+          y = "Percent of Participants")
+plot(moderate_pa_plot)
+```
+
+## Plotting vigorous PA by gender
+```{r}
+vigorous_pa_plot <- ggplot (data = summary_power_victoria_merged_filtered, aes(total_vigorous)) + 
+    geom_density(aes(fill = gender_updated), position = "dodge", alpha = 0.5) + 
+      labs(title = "Summary Accelerometer Physical Activity", 
+          x = "Activity Count", 
+          y = "Percent of Participants")
+plot(vigorous_pa_plot)
+```
+
+## Plotting light PA by gender
+```{r}
+light_pa_plot <- ggplot (data = summary_power_victoria_merged_filtered, aes(total_light)) + 
+    geom_histogram(aes(fill = gender_updated), position = "dodge", alpha = 0.5) + 
+      labs(title = "Summary Accelerometer Physical Activity", 
+          x = "Activity Count", 
+          y = "Percent of Participants")
+plot(light_pa_plot)
+```
+
+## PLotting Sedentary PA by gender
+```{r}
+sedentary_pa_plot <- ggplot (data = summary_power_victoria_merged_filtered, aes(total_sedentary)) + 
+    geom_histogram(aes(fill = gender_updated), position = "dodge", alpha = 0.5) + 
+      labs(title = "Summary Accelerometer Physical Activity", 
+          x = "Activity Count", 
+          y = "Percent of Participants")
+plot(sedentary_pa_plot)
+```
+
