@@ -47,18 +47,30 @@ library(sf)
 library(data.table)
 ```
 
+## Reading in Data
+```{r}
+power_victoria_merged_updated <- fread("power_victoria_merged_updated.csv") #big file with all summary counts - 151
+victoria_new_ID_gps <- read_csv("victoria_new_ID_gps.csv") #all survey participant data - 281
+victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv") #GPS participant survey data - 149
+
+power_victoria_merged_filtered <- fread("power_victoria_merged_filtered.csv") #summary counts for 149 participants
+summary_power_victoria_merged_filtered <- fread("summary_power_victoria_merged_filtered.csv")
+```
+
 ## Plotting self-report PA by gender
 ```{r}
-victoria_new_ID_gps <- read_csv("victoria_new_ID_gps.csv")
-
 tabyl(victoria_new_ID_gps$gender)
  
 PA_plot <- ggplot (data = victoria_new_ID_gps, aes(total_pa_met_formula)) + 
-    geom_density(aes(fill = gender), position = "dodge", alpha = 0.5) + 
+    geom_histogram(aes(fill = gender), position = "dodge", alpha = 0.5) + 
       labs(title = "Overall Physical Activity", 
           x = "Total MET Minutes of Physical Activity", 
           y = "Percent of Participants")
 plot(PA_plot)
+
+CrossTable(victoria_new_ID_gps$total_pa_met_formula, victoria_new_ID_gps$gender)
+
+table(victoria_new_ID_gps$total_pa_met_formula, victoria_new_ID_gps$gender)
 ```
 
 ## Plotting activity count PA by gender
@@ -124,5 +136,39 @@ sedentary_pa_plot <- ggplot (data = summary_power_victoria_merged_filtered, aes(
           x = "Activity Count", 
           y = "Percent of Participants")
 plot(sedentary_pa_plot)
+```
+
+## 
+```{r}
+
+
+gender_regression <- lm(total_pa_met_formula ~ gender_updated,  data = victoria_small_merged_1)
+
+summary(gender_regression)
+
+gender_regression_1 <- lm(Cycling_formula ~ gender_updated,  data = victoria_small_merged_1)
+
+summary(gender_regression_1)
+```
+
+```{r}
+gender_regression_2 <- lm(percent ~ gender_updated,  data = victoria_small_merged_1)
+summary(gender_regression_2)
+```
+
+```{r}
+gender_regression_3 <- glm.nb(summary_count ~ gender_updated,  data = power_victoria_merged_filtered)
+summary(gender_regression_3)
+
+gender_regression_4 <- lm(total_moderate ~ gender_updated, data = summary_power_victoria_merged_filtered)
+summary(gender_regression_4)
+```
+
+##AAA Support
+```{r}
+table(victoria_small_merged_1$aaa_bike_more_1, victoria_small_merged_1$gender_updated)
+CrossTable(victoria_small_merged_1$aaa_bike_more_1, victoria_small_merged_1$gender_updated)
+CrossTable(victoria_small_merged_1$aaa_familiarity_1, victoria_small_merged_1$gender_updated)
+CrossTable(victoria_small_merged_1$aaa_idea_1, victoria_small_merged_1$gender_updated)
 ```
 
