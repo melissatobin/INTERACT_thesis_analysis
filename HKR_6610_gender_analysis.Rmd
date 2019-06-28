@@ -2,7 +2,9 @@
 title: "HKR 6610 - Online Survey Analysis (Gender)"
 author: "Melissa Tobin"
 date: '2019-05-14'
-output: html_document
+output:   
+  html_document:
+        keep_md: true
 ---
 
 ```{r setup, include=FALSE}
@@ -788,65 +790,80 @@ plot(gender_regression_1)
 write.csv(victoria_merged_filter, file = "victoria_merged_filter.csv")
 ```
 
-
-## Spearman's Correlation Coefficient - Gender
+## Making figure for preference for AT infrastructure
 ```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$gender_number, alternative = "less", method = "spearman")
-#not significant - no correlation (4%)
+victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
+
+victoria_merged_filter$path_comf <- factor(victoria_merged_filter$path_comf, c("Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+path_comfortable_plot <- ggplot (data = victoria_merged_filter, aes(path_comf)) +
+    geom_bar(aes()) + 
+      labs(title = "Preference for Bicycle Paths", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+
+plot(path_comfortable_plot)
+
 ```
 
-
-## Spearman's Correlation Coefficient - Age
 ```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$age_calculated, alternative = "less", method = "spearman")
-#not significant - no correlation (-3.6%)
+at_infrastructure <- victoria_merged_filter %>% dplyr::select(X1, path_comf, residential_street_comf, res_street_traffic_calming_comf, major_street_no_bike_lane, major_street_bike_lane, major_street_separated_bike_lane)
+
+at_infrastructure$path_comf <- factor(at_infrastructure$path_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$residential_street_comf <- factor(at_infrastructure$residential_street_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$res_street_traffic_calming_comf <- factor(at_infrastructure$res_street_traffic_calming_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$major_street_no_bike_lane <- factor(at_infrastructure$major_street_no_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$major_street_bike_lane <- factor(at_infrastructure$major_street_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$major_street_separated_bike_lane <- factor(at_infrastructure$major_street_separated_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
 ```
 
-## Spearman's Correlation Coefficient - Health Status
 ```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$sf1, alternative = "less", method = "spearman")
-# not significant - no correlation (-.6%)
+typeof(at_infrastructure$path_comf)  
+at_infrastructure$path_comf <- as.character(at_infrastructure$path_comf)
+
+at_infrastructure %>%
+  keep(is.character) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_bar() + theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+      labs(title = "Preference for Different Types of Active Transportation Infrastructure", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") 
+
+
 ```
 
-## Spearman's Correlation Coefficient - Income 
 ```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$income, alternative = "less", method = "spearman")
-# not significant - no correlation (9.6%)
+at_infrastructure_1 <- victoria_merged_filter %>% dplyr::select(bike_comf_a, bike_comf_b, bike_comf_c, bike_comf_d, bike_comf_e, bike_comf_f)
+at_infrastructure_2 <- at_infrastructure_1 %>% filter(bike_comf_c <= 4) %>% filter(bike_comf_f <= 4)
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_a"] <- "separated_path"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_b"] <- "residential_street"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_c"] <- "residential_street_traffic_calming"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_d"] <- "major_street_no_bike_lane"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_e"] <- "major_street_bike_lane"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_f"] <- "major_street_separated_bike_lane"
+
+at_infrastructure_2 %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_bar() +
+      labs(title = "Preference for Different Types of Active Transportation Infrastructure", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") 
 ```
 
-## Spearman's Correlation Coefficient - Marital status
-```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$marital_status, alternative = "less", method = "spearman")
-# not significant - no correlation (5.7%)
-```
-
-## Spearman's Correlation Coefficient - Ethnicity
-```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$ethnicity_number, alternative = "less", method = "spearman")
-# not significant - no correlation (.04%)
-```
-
-## Spearman's Correlation Coefficient - Cycling MET-minutes of PA
-```{r}
-cor.test(victoria_merged_filter$support_index, victoria_merged_filter$Cycling_formula, alternative = "less", method = "spearman")
-# significant -12%
-```
-
-## Spearman's Correlation Coefficient - Cycling MET-minutes of PA and comfortable on separated
-```{r}
-cor.test(victoria_merged_filter$separated_bike_lane, victoria_merged_filter$Cycling_formula, alternative = "less", method = "spearman")
-# significant -14%
-```
-## Scatterplot 
-
-## Scatterplot analyzing support index and age 
-```{r}
-scatter_support_age <- ggplot(victoria_merged_filter, aes(support_index, age_calculated))
-
-scatter_support_age_1 <- scatter_support_age +
-                           geom_point() +
-                             labs(title = "Scatterplot of Age and Support Index for AAA",
-                               x = "Support Index for AAA", 
-                                y = "Age")
-plot(scatter_support_age_1)
-```

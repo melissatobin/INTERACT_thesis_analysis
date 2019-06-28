@@ -251,4 +251,104 @@ summary(victoria_small_merged_1$average_hours)
 sd(victoria_small_merged_1$average_hours)
 ```
 
+## Filtering accelerometer data
+```{r}
+power_victoria_merged_filtered <- read_csv("power_victoria_merged_filtered.csv")
+table(power_victoria_merged_filtered$summary_count)
+
+power_victoria_accel_filtered <- power_victoria_merged_filtered %>% filter(summary_count <= 10000)
+
+write_csv(power_victoria_accel_filtered, "power_victoria_accel_filtered.csv")
+summary(power_victoria_accel_filtered$summary_count)
+sd(power_victoria_accel_filtered$summary_count)
+describeBy(power_victoria_accel_filtered$summary_count)
+```
+
+## Plotting Accelerometer data
+```{r}
+accel_plot <- ggplot(power_victoria_accel_filtered) + 
+                      geom_histogram(aes(summary_count), bins = 15) +
+  labs(title = "Accelerometer Activity Counts",
+       x = "Activity Count",
+       y = "Number of Counts (n)")
+                
+plot(accel_plot)
+```
+
+## Making figure for preference for AT infrastructure
+```{r}
+victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
+
+victoria_merged_filter$path_comf <- factor(victoria_merged_filter$path_comf, c("Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+path_comfortable_plot <- ggplot (data = victoria_merged_filter, aes(path_comf)) +
+    geom_bar(aes()) + 
+      labs(title = "Preference for Bicycle Paths", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") + theme(axis.text.x = element_text(angle=45, hjust=1))
+
+plot(path_comfortable_plot)
+
+```
+
+```{r}
+at_infrastructure <- victoria_merged_filter %>% dplyr::select(X1, path_comf, residential_street_comf, res_street_traffic_calming_comf, major_street_no_bike_lane, major_street_bike_lane, major_street_separated_bike_lane)
+
+at_infrastructure$path_comf <- factor(at_infrastructure$path_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$residential_street_comf <- factor(at_infrastructure$residential_street_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$res_street_traffic_calming_comf <- factor(at_infrastructure$res_street_traffic_calming_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$major_street_no_bike_lane <- factor(at_infrastructure$major_street_no_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$major_street_bike_lane <- factor(at_infrastructure$major_street_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+at_infrastructure$major_street_separated_bike_lane <- factor(at_infrastructure$major_street_separated_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+
+```
+
+```{r}
+typeof(at_infrastructure$path_comf)  
+at_infrastructure$path_comf <- as.character(at_infrastructure$path_comf)
+
+at_infrastructure %>%
+  keep(is.character) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_bar() + theme(axis.text.x = element_text(angle=45, hjust=1)) + 
+      labs(title = "Preference for Different Types of Active Transportation Infrastructure", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") 
+
+
+```
+
+```{r}
+at_infrastructure_1 <- victoria_merged_filter %>% dplyr::select(bike_comf_a, bike_comf_b, bike_comf_c, bike_comf_d, bike_comf_e, bike_comf_f)
+at_infrastructure_2 <- at_infrastructure_1 %>% filter(bike_comf_c <= 4) %>% filter(bike_comf_f <= 4)
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_a"] <- "separated_path"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_b"] <- "residential_street"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_c"] <- "residential_street_traffic_calming"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_d"] <- "major_street_no_bike_lane"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_e"] <- "major_street_bike_lane"
+
+colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_f"] <- "major_street_separated_bike_lane"
+
+at_infrastructure_2 %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_bar() +
+      labs(title = "Preference for Different Types of Active Transportation Infrastructure", 
+          x = "Level of Preference", 
+          y = "Number of Participants (n)") 
+```
 
