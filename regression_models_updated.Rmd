@@ -50,11 +50,6 @@ library(stringr)
 library(stringi)
 library(finalfit)
 library(data.table)
-install.packages("devtools")
-devtools::install_github("cardiomoon/ggiraphExtra")
-require(ggiraph)
-require(ggiraphExtra)
-require(plyr)
 ```
 
 ## Reading in data
@@ -125,10 +120,6 @@ plot(cooks_plot)
 ```{r}
 nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_merged_filtered)
 summary(nb_regression_1)
-
-power_victoria_merged <- fread("power_victoria_merged.csv")
-nb_regression_old <- glm.nb(summary_count ~ percent, data = power_victoria_merged)
-summary(nb_regression_old)
 ```
 
 ## Negative binomial regression with all predictors
@@ -204,4 +195,3 @@ ggplot(power_victoria_merged_filtered, aes(y =
                  x = "Exposure to Pandora (Percentage of total points",
                  y = "Activity Counts")
 ```
-
