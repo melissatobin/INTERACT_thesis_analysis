@@ -1,0 +1,197 @@
+---
+title: "regression_models_updated"
+author: "Melissa Tobin"
+date: "02/07/2019"
+output: 
+  html_document:
+        keep_md: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+chooseCRANmirror(graphics = FALSE, ind = 1)
+
+OS <- Sys.info()
+if (OS["sysname"] == "Windows") {
+  path <-
+    "Z:/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+} else {
+  path <-
+    "/Volumes/hkr-storage/Research/dfuller/Walkabilly/people/Melissa Tobin/Thesis Results/INTERACT thesis Analysis"
+}
+setwd(path)
+```
+
+## Loading Packages
+```{r}
+library(lmtest)
+library(tidyverse)
+library(ggplot2)
+library(haven)
+library(janitor)
+library(pastecs)
+library(psych)
+library(car)
+library(Hmisc)
+library(ggm)
+library(polycor)
+library(tableone)
+library(forcats)
+library(gmodels)
+library(QuantPsyc)
+library(KernSmooth)
+library(raster)
+library(sp)
+library(sf)
+library(lubridate)
+library(anytime)
+library(stringr)
+library(stringi)
+library(finalfit)
+library(data.table)
+```
+
+## Reading in data
+```{r}
+victoria_small_merged_1 <- fread("victoria_small_merged_1.csv")
+
+power_victoria_merged_filtered <- fread("power_victoria_merged_filtered.csv")
+```
+
+## Regression Model (lm) with self-report PA and all predictors 
+```{r}
+victoria_small_merged_1$income_2 <- factor(victoria_small_merged_1$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+
+tabyl(victoria_small_merged_1$income_2)
+lm_1 <- lm(total_pa_met_formula ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = victoria_small_merged_1)
+summary(lm_1)
+confint(lm_1)
+
+lm_1_plot <- ggplot(victoria_small_merged_1, aes(y = total_pa_met_formula, x = percent)) + 
+               geom_point() +
+                geom_smooth(method = "lm") +         
+                  labs(title = "Exposure to Pandora protected cycling lane and Physical Activity (Self-Report)",
+                  x = "Percent Exposure",
+                 y = "Total MET-Minutes of Physical Activity per week")
+plot(lm_1_plot)  
+##This plot works but only has exposure and outcome. I don't know how to include all predictor variables
+```
+
+## Checking assumptions for linear regression
+```{r}
+victoria_small_merged_1$residuals <- resid(lm_1, na.rm = TRUE)
+victoria_small_merged_1$standardized.residuals <- rstandard(lm_1)
+victoria_small_merged_1$studentized.residuals <- rstudent(lm_1) 
+victoria_small_merged_1$cooks.distance <- cooks.distance(lm_1) 
+
+durbinWatsonTest(lm_1) #checking for independence
+vif(lm_1)
+1/vif(lm_1)
+mean(vif(lm_1))
+plot(lm_1)
+```
+
+## Plotting Residuals
+```{r}
+residual_plot <- ggplot(victoria_small_merged_1, aes(standardized.residuals)) + geom_density() +
+                  geom_vline(xintercept = 2, colour = "red") + geom_vline(xintercept = -2, colour= "red") +
+                    labs(title = "Standardized Residuals Plot", x = "Standarized Residuals",
+                      y = "Density (% of Participants)")
+
+plot(residual_plot)
+
+tabyl(victoria_small_merged_1$standardized.residuals)
+```
+
+## Cook's Plot
+```{r}
+cooks_plot <- ggplot(victoria_small_merged_1, aes(cooks.distance)) +
+                geom_density() +
+                geom_vline(xintercept = 1, colour = "red") +
+                labs(title = "Cooks Plot", 
+                     x = "Cooks Distance",
+                     y = "Density (% of Participants")
+plot(cooks_plot)
+```
+
+
+## Negative binomial regression with just percent and summary count
+```{r}
+nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_merged_filtered)
+summary(nb_regression_1)
+```
+
+## Negative binomial regression with all predictors
+```{r}
+nb_regression_2 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_merged_filtered)
+summary(nb_regression_2)
+```
+
+## Checking assumptions for negative binomial filtered model
+```{r}
+poisson_regression <- glm(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, family = "poisson", data = power_victoria_merged_filtered)
+summary(poisson_regression)
+
+pchisq(2 * (logLik(nb_regression_2) - logLik(poisson_regression)), df = 1, lower.tail = FALSE)
+```
+
+## Confidence interavls
+```{r}
+est <- cbind(Estimate = coef(nb_regression_2), confint(nb_regression_2))
+incident_rate_ratios <- exp(est)
+```
+
+## Recoding to numeric for plotting 
+```{r}
+tabyl(power_victoria_merged_filtered$income_2)
+
+power_victoria_merged_filtered <- power_victoria_merged_filtered %>% mutate(ethnicity_1 = case_when(
+  ethnicity_updated == "Caucasian" ~ 1,
+  ethnicity_updated == "Racialized Group" ~ 2
+))
+
+power_victoria_merged_filtered <- power_victoria_merged_filtered %>% mutate(gender_1 = case_when(
+  gender_updated == "Men" ~ 1,
+  gender_updated == "Women" ~ 2
+))
+
+power_victoria_merged_filtered <- power_victoria_merged_filtered %>% mutate(age_categories_1 = case_when(
+  age_categories == "20-29" ~ 1,
+  age_categories == "30-39" ~ 2,
+  age_categories == "40-49" ~ 3,
+  age_categories == "50-59" ~ 4,
+  age_categories == "60+" ~ 5,
+))
+
+power_victoria_merged_filtered <- power_victoria_merged_filtered %>% mutate(income_3 = case_when(
+  income_2 == "$49,000 or less" ~ 1,
+  income_2 == "$50,000 to $99,999" ~ 2,
+  income_2 == "$100,000 to $150,000" ~ 3,
+  income_2 == "$150,000 or more" ~ 4,
+  income_2 == "I don't know/Prefer not to answer" ~ 5,
+))
+
+```
+
+##Plotting Regression
+```{r}
+ggplot(power_victoria_merged_filtered, aes(y = 
+      summary_count, x = percent + ethnicity_1 + gender_1 + age_categories_1 + income_3 + mean_temp_date +
+        total_precip_date)) + 
+          geom_point() +
+            geom_smooth(method = "glm.nb") +
+               labs(title = "Exposure to Pandora protected cycling lane and Physical Activity (Activity Counts)",
+                 x = "Predictor Variables (Exposure, Ethnicity, Gender, Age, Income, Mean temperature, Total Precipitation (mm)",
+                 y = "Activity Counts")
+```
+
+```{r}
+ggplot(power_victoria_merged_filtered, aes(y = 
+      summary_count, x = percent)) + 
+          geom_point() +
+            geom_smooth(method = "glm.nb") +
+               labs(title = "Exposure to Pandora protected cycling lane and Physical Activity (Activity Counts)",
+                 x = "Exposure to Pandora (Percentage of total points",
+                 y = "Activity Counts")
+```

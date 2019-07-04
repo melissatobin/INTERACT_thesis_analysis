@@ -69,7 +69,6 @@ weather_data <- read_csv("weather_data_1.csv")
 doy_start_end_filtered <- read_csv("doy_start_end_filtered.csv")
 ```
 
-
 ## Total hours, number of days and average hours 
 ```{r}
 wear_time_stamps_updated_final <- wear_time_stamps_updated_final %>% group_by(interact_id) %>% mutate(total_hours = sum(unique_hours))
@@ -204,10 +203,10 @@ write_csv(victoria_small_merged_1, "victoria_small_merged_1.csv")
 ##Plotting exposure 
 ```{r}
 exposure_plot <- ggplot(victoria_small_merged_1) + 
-                      geom_density(aes(percent)) +
-  labs(title = "Total Exposure",
+                      geom_histogram(aes(percent), bins =80) +
+  labs(title = "Exposure to the Pandora Protected Cycling Lane",
        x = "Percent Exposure",
-       y = "Percentage of Participants")
+       y = "Number of Participants (n)")
                 
 plot(exposure_plot)
 
@@ -226,10 +225,10 @@ describeBy(victoria_small_merged_1$total_pa_met_formula)
 ## Plotting outcome 
 ```{r}
 pa_total_plot <- ggplot(victoria_small_merged_1) + 
-                      geom_histogram(aes(total_pa_met_formula), bins = 60) +
+                      geom_histogram(aes(total_pa_met_formula), bins = 80) +
   labs(title = "Total MET-minutes of Physical Activity",
        x = "Total MET-minutes of PA",
-       y = "Percentage of Participants")
+       y = "Number of Participants (n)")
                 
 plot(pa_total_plot)
 
