@@ -35,18 +35,18 @@ library(tidyverse)
 ```
 
 ```
-## ── Attaching packages ──────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+## ── Attaching packages ─────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
 ```
 
 ```
-## ✔ ggplot2 3.1.1     ✔ purrr   0.3.2
-## ✔ tibble  2.1.1     ✔ dplyr   0.8.1
+## ✔ ggplot2 3.2.0     ✔ purrr   0.3.2
+## ✔ tibble  2.1.3     ✔ dplyr   0.8.1
 ## ✔ tidyr   0.8.3     ✔ stringr 1.4.0
 ## ✔ readr   1.1.1     ✔ forcats 0.3.0
 ```
 
 ```
-## ── Conflicts ─────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()
 ```
@@ -3909,6 +3909,44 @@ write_csv(victoria_gps_only, "victoria_gps_only.csv")
 write_csv(victoria_new_ID_gps, "victoria_new_ID_gps.csv")
 ```
 
+
+
+```r
+victoria_new_ID_GPS <- read_csv("victoria_new_ID_gps.csv")
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   .default = col_integer(),
+##   date_of_survey.x = col_date(format = ""),
+##   month = col_character(),
+##   day = col_character(),
+##   gender_vic.x = col_character(),
+##   residence_cp = col_character(),
+##   date_of_survey.y = col_date(format = ""),
+##   preferred_mode_f_txt = col_character(),
+##   car_share = col_character(),
+##   car_share_txt = col_character(),
+##   house_tenure_txt = col_character(),
+##   dwelling_type_txt = col_character(),
+##   living_arrange = col_character(),
+##   living_arrange_txt = col_character(),
+##   residence = col_date(format = ""),
+##   group_id = col_character(),
+##   gender_vic.y = col_character(),
+##   sensedoc_ID = col_character(),
+##   ethica_ID = col_character(),
+##   age_categories = col_character(),
+##   gender = col_character()
+##   # ... with 27 more columns
+## )
+```
+
+```
+## See spec(...) for full column specifications.
+```
+
 ## Car Access
 
 ```r
@@ -4473,5 +4511,62 @@ tabyl(victoria_new_ID_gps$cycling_club)
 
 ```r
 #only a small number of participants belonged to the bike advocacy group or a club
+```
+
+## Gender Analysis
+
+```r
+CrossTable(victoria_new_ID_GPS$aaa_bike_more, victoria_new_ID_gps$gender)
+```
+
+```
+## 
+##  
+##    Cell Contents
+## |-------------------------|
+## |                       N |
+## | Chi-square contribution |
+## |           N / Row Total |
+## |           N / Col Total |
+## |         N / Table Total |
+## |-------------------------|
+## 
+##  
+## Total Observations in Table:  281 
+## 
+##  
+##                                   | victoria_new_ID_gps$gender 
+## victoria_new_ID_GPS$aaa_bike_more |                        Men | Trans or gender non-binary |                      Women |                  Row Total | 
+## ----------------------------------|----------------------------|----------------------------|----------------------------|----------------------------|
+##                                 1 |                        102 |                          2 |                        117 |                        221 | 
+##                                   |                      0.032 |                      0.055 |                      0.041 |                            | 
+##                                   |                      0.462 |                      0.009 |                      0.529 |                      0.786 | 
+##                                   |                      0.773 |                      0.667 |                      0.801 |                            | 
+##                                   |                      0.363 |                      0.007 |                      0.416 |                            | 
+## ----------------------------------|----------------------------|----------------------------|----------------------------|----------------------------|
+##                                 2 |                         30 |                          1 |                         29 |                         60 | 
+##                                   |                      0.117 |                      0.202 |                      0.152 |                            | 
+##                                   |                      0.500 |                      0.017 |                      0.483 |                      0.214 | 
+##                                   |                      0.227 |                      0.333 |                      0.199 |                            | 
+##                                   |                      0.107 |                      0.004 |                      0.103 |                            | 
+## ----------------------------------|----------------------------|----------------------------|----------------------------|----------------------------|
+##                      Column Total |                        132 |                          3 |                        146 |                        281 | 
+##                                   |                      0.470 |                      0.011 |                      0.520 |                            | 
+## ----------------------------------|----------------------------|----------------------------|----------------------------|----------------------------|
+## 
+## 
+```
+
+```r
+tabyl(victoria_new_ID_GPS$gender_vic.y)
+```
+
+```
+##  victoria_new_ID_GPS$gender_vic.y   n     percent
+##                            [1, 4]   1 0.003558719
+##                               [1] 131 0.466192171
+##                               [2] 146 0.519572954
+##                               [3]   1 0.003558719
+##                               [4]   2 0.007117438
 ```
 
