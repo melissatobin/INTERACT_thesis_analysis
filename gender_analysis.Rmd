@@ -162,14 +162,6 @@ gender_regression_2 <- lm(percent ~ gender_updated,  data = victoria_small_merge
 summary(gender_regression_2)
 ```
 
-```{r}
-gender_regression_3 <- glm.nb(summary_count ~ gender_updated,  data = power_victoria_merged_filtered)
-summary(gender_regression_3)
-
-gender_regression_4 <- lm(total_moderate ~ gender_updated, data = summary_power_victoria_merged_filtered)
-summary(gender_regression_4)
-```
-
 ##AAA Support
 ```{r}
 table(victoria_new_ID_gps$aaa_bike_more_1, victoria_new_ID_gps$gender)
