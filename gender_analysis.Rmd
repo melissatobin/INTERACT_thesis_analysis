@@ -57,6 +57,11 @@ power_victoria_merged_filtered <- fread("power_victoria_merged_filtered.csv") #s
 summary_power_victoria_merged_filtered <- fread("summary_power_victoria_merged_filtered.csv")
 ```
 
+
+```{r}
+describeBy(victoria_new_ID_gps$age_calculated, victoria_new_ID_gps$gender)
+```
+
 ## Plotting self-report PA by gender
 ```{r}
 tabyl(victoria_new_ID_gps$gender)
@@ -71,6 +76,7 @@ plot(PA_plot)
 CrossTable(victoria_new_ID_gps$total_pa_met_formula, victoria_new_ID_gps$gender)
 
 table(victoria_new_ID_gps$total_pa_met_formula, victoria_new_ID_gps$gender)
+
 ```
 
 ## Plotting activity count PA by gender
@@ -166,9 +172,34 @@ summary(gender_regression_4)
 
 ##AAA Support
 ```{r}
-table(victoria_small_merged_1$aaa_bike_more_1, victoria_small_merged_1$gender_updated)
-CrossTable(victoria_small_merged_1$aaa_bike_more_1, victoria_small_merged_1$gender_updated)
-CrossTable(victoria_small_merged_1$aaa_familiarity_1, victoria_small_merged_1$gender_updated)
-CrossTable(victoria_small_merged_1$aaa_idea_1, victoria_small_merged_1$gender_updated)
+table(victoria_new_ID_gps$aaa_bike_more_1, victoria_new_ID_gps$gender)
+tabyl(victoria_new_ID_gps$aaa_idea_1)
+
+table(victoria_new_ID_gps$aaa_familiarity_1, victoria_new_ID_gps$gender)
+table(victoria_new_ID_gps$aaa_idea_1, victoria_new_ID_gps$gender)
+
+tabyl(victoria_new_ID_gps$bike_safety)
+table(victoria_new_ID_gps$bike_safety, victoria_new_ID_gps$gender)
+
+describeBy(victoria_new_ID_gps$bike_freq_a, victoria_new_ID_gps$gender)
+
+describeBy(victoria_new_ID_gps$bike_freq_b, victoria_new_ID_gps$gender)
+
+describeBy(victoria_new_ID_gps$bike_freq_c, victoria_new_ID_gps$gender)
+
+describeBy(victoria_new_ID_gps$bike_freq_d, victoria_new_ID_gps$gender)
+```
+
+```{r}
+bike_frequency_1 <- data.frame(season = c("fall", "fall", "fall", "winter", "winter", "winter", "spring", "spring",  "spring", "summer", "summer", "summer"), 
+                           average_days = c(64.1, 56.5, 60.0, 52.6, 44.6, 48.2, 65.9, 59.6, 62.6, 71.8, 64.1, 67.9),
+                           gender = c("men", "women", "total", "men", "women", "total", "men", "women", "total", "men", "women", "total"))
+
+bike_frequency_plot <- ggplot(bike_frequency_1) +
+  geom_point(aes(x = season, y = average_days, colour = gender, size = 1)) + 
+  labs(title = "Average Number of Cycling Days per Season", 
+          x = "Season", 
+          y = "Average Number of Days") 
+  
 ```
 

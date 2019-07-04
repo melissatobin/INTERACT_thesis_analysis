@@ -326,7 +326,9 @@ at_infrastructure %>%
 ```
 
 ```{r}
-at_infrastructure_1 <- victoria_merged_filter %>% dplyr::select(bike_comf_a, bike_comf_b, bike_comf_c, bike_comf_d, bike_comf_e, bike_comf_f)
+victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
+
+at_infrastructure_1 <- victoria_merged_filter %>% dplyr::select(bike_comf_a, bike_comf_b, bike_comf_c, bike_comf_d, bike_comf_e, bike_comf_f, gender)
 at_infrastructure_2 <- at_infrastructure_1 %>% filter(bike_comf_c <= 4) %>% filter(bike_comf_f <= 4)
 
 colnames(at_infrastructure_2)[colnames(at_infrastructure_2) == "bike_comf_a"] <- "separated_path"

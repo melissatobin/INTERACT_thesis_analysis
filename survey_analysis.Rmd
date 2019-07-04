@@ -799,6 +799,11 @@ write_csv(victoria_gps_only, "victoria_gps_only.csv")
 write_csv(victoria_new_ID_gps, "victoria_new_ID_gps.csv")
 ```
 
+
+```{r}
+victoria_new_ID_GPS <- read_csv("victoria_new_ID_gps.csv")
+```
+
 ## Car Access
 ```{r}
 tabyl(victoria_new_ID_gps$car_access)
@@ -870,5 +875,13 @@ tabyl(victoria_new_ID_gps$vicroads_i)
 tabyl(victoria_new_ID_gps$bike_advocacy)
 tabyl(victoria_new_ID_gps$cycling_club)
 #only a small number of participants belonged to the bike advocacy group or a club
+```
+
+## Gender Analysis
+```{r}
+CrossTable(victoria_new_ID_GPS$aaa_bike_more, victoria_new_ID_gps$gender)
+tabyl(victoria_new_ID_GPS$gender_vic.y)
+
+
 ```
 
