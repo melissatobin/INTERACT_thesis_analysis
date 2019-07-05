@@ -352,4 +352,3 @@ at_infrastructure_2 %>%
           x = "Level of Preference", 
           y = "Number of Participants (n)") 
 ```
-

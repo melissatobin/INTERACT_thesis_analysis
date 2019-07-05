@@ -203,3 +203,28 @@ bike_frequency_plot <- ggplot(bike_frequency_1) +
   
 ```
 
+```{r}
+table(victoria_new_ID_gps$major_street_separated_bike_lane, victoria_new_ID_gps$gender)
+
+CrossTable(victoria_new_ID_gps$major_street_bike_lane, victoria_new_ID_gps$gender)
+```
+
+## Gender Differences in PA and Exposure
+```{r}
+victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
+describeBy(victoria_small_merged_1$percent, victoria_small_merged_1$gender)
+
+describeBy(victoria_small_merged_1$total_pa_met_formula, victoria_small_merged_1$gender)
+
+victoria_new_ID_gps <- read_csv("victoria_new_ID_gps.csv")
+
+describeBy(victoria_new_ID_gps$total_pa_met_formula, victoria_new_ID_gps$gender)
+
+power_victoria_accel_filtered <- read_csv("power_victoria_accel_filtered.csv")
+
+describeBy(power_victoria_accel_filtered$summary_count, power_victoria_accel_filtered$gender_updated)
+
+```
+
+
+
