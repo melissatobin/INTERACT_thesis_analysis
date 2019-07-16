@@ -188,11 +188,12 @@ bike_frequency_1 <- data.frame(season = c("fall", "fall", "fall", "winter", "win
                            gender = c("men", "women", "total", "men", "women", "total", "men", "women", "total", "men", "women", "total"))
 
 bike_frequency_plot <- ggplot(bike_frequency_1) +
-  geom_point(aes(x = season, y = average_days, colour = gender, size = 1)) + 
+  geom_point(aes(x = season, y = average_days, colour = gender)) + 
   labs(title = "Average Number of Cycling Days per Season", 
           x = "Season", 
-          y = "Average Number of Days") 
+          y = "Average Number of Days") + coord_cartesian(ylim = c(10, 90))
   
+plot(bike_frequency_plot)
 ```
 
 ```{r}
@@ -210,7 +211,7 @@ describeBy(victoria_small_merged_1$total_pa_met_formula, victoria_small_merged_1
 
 victoria_new_ID_gps <- read_csv("victoria_new_ID_gps.csv")
 
-describeBy(victoria_new_ID_gps$total_pa_met_formula, victoria_new_ID_gps$gender)
+describeBy(victoria_new_ID_gps$age_calculated, victoria_new_ID_gps$gender)
 
 power_victoria_accel_filtered <- read_csv("power_victoria_accel_filtered.csv")
 

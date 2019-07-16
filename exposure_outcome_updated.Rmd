@@ -202,6 +202,8 @@ write_csv(victoria_small_merged_1, "victoria_small_merged_1.csv")
 
 ##Plotting exposure 
 ```{r}
+victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
+tabyl(victoria_small_merged_1$percent)
 exposure_plot <- ggplot(victoria_small_merged_1) + 
                       geom_histogram(aes(percent), bins =80) +
   labs(title = "Exposure to the Pandora Protected Cycling Lane",
@@ -291,25 +293,60 @@ plot(path_comfortable_plot)
 ```
 
 ```{r}
-at_infrastructure <- victoria_merged_filter %>% dplyr::select(X1, path_comf, residential_street_comf, res_street_traffic_calming_comf, major_street_no_bike_lane, major_street_bike_lane, major_street_separated_bike_lane)
+victoria_merged_filter <- read_csv("victoria_merged_filter.csv")
+at_infrastructure <- victoria_merged_filter %>% dplyr::select(path_comf, residential_street_comf, res_street_traffic_calming_comf, major_street_no_bike_lane, major_street_bike_lane, major_street_separated_bike_lane)
 
-at_infrastructure$path_comf <- factor(at_infrastructure$path_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+tabyl(at_infrastructure$major_street_no_bike_lane)
+at_infrastructure$path_comf <- factor(at_infrastructure$path_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
 
-at_infrastructure$residential_street_comf <- factor(at_infrastructure$residential_street_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+at_infrastructure$residential_street_comf <- factor(at_infrastructure$residential_street_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
 
-at_infrastructure$res_street_traffic_calming_comf <- factor(at_infrastructure$res_street_traffic_calming_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+at_infrastructure$res_street_traffic_calming_comf <- factor(at_infrastructure$res_street_traffic_calming_comf, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
 
-at_infrastructure$major_street_no_bike_lane <- factor(at_infrastructure$major_street_no_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+at_infrastructure$major_street_no_bike_lane <- factor(at_infrastructure$major_street_no_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
 
-at_infrastructure$major_street_bike_lane <- factor(at_infrastructure$major_street_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
+at_infrastructure$major_street_bike_lane <- factor(at_infrastructure$major_street_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
 
-at_infrastructure$major_street_separated_bike_lane <- factor(at_infrastructure$major_street_separated_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat comfortable", "Very comfortable"))
-
+at_infrastructure$major_street_separated_bike_lane <- factor(at_infrastructure$major_street_separated_bike_lane, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Somewhat comfortable", "Very comfortable"))
 ```
 
 ```{r}
 typeof(at_infrastructure$path_comf)  
 at_infrastructure$path_comf <- as.character(at_infrastructure$path_comf)
+
+colnames(at_infrastructure)[colnames(at_infrastructure) == "path_comf"] <- "1_separated_path"
+
+x$name <- factor(x$name, levels = x$name[order(x$val)])
+
+at_infrastructure$`1_separated_path` <- factor(at_infrastructure$`1_separated_path`, levels =
+c("Very uncomfortable", "Somewhat comfortable"))
+
+at_infrastructure$`1_separated_path` <- factor(at_infrastructure$`1_separated_path`, c("I don't know/Prefer not to answer", "Very uncomfortable", "Somewhat uncomfortable", "Very comfortable"))
+
+at_infrastructure$`1_separated_path` <- as.character(at_infrastructure$`1_separated_path`)
+
+ggplot(at_infrastructure) +
+  geom_bar(aes(x = `1_separated_path`))
+
+at_infrastructure$residential_street_comf <- as.character(at_infrastructure$residential_street_comf)
+
+colnames(at_infrastructure)[colnames(at_infrastructure) == "residential_street_comf"] <- "2_residential_street"
+
+at_infrastructure$res_street_traffic_calming_comf <- as.character(at_infrastructure$res_street_traffic_calming_comf)
+
+colnames(at_infrastructure)[colnames(at_infrastructure) == "res_street_traffic_calming_comf"] <- "3_residential_street_traffic_calming"
+
+at_infrastructure$major_street_no_bike_lane <- as.character(at_infrastructure$major_street_no_bike_lane)
+
+colnames(at_infrastructure)[colnames(at_infrastructure) == "major_street_no_bike_lane"] <- "4_major_street_no_bike_lane"
+
+at_infrastructure$major_street_bike_lane <- as.character(at_infrastructure$major_street_bike_lane)
+
+colnames(at_infrastructure)[colnames(at_infrastructure) == "major_street_bike_lane"] <- "5_major_street_bike_lane"
+
+at_infrastructure$major_street_separated_bike_lane <- as.character(at_infrastructure$major_street_separated_bike_lane)
+
+colnames(at_infrastructure)[colnames(at_infrastructure) == "major_street_separated_bike_lane"] <- "6_major_street_separated_bike_lane"
 
 at_infrastructure %>%
   keep(is.character) %>% 
@@ -320,8 +357,6 @@ at_infrastructure %>%
       labs(title = "Preference for Different Types of Active Transportation Infrastructure", 
           x = "Level of Preference", 
           y = "Number of Participants (n)") 
-
-
 ```
 
 ```{r}
