@@ -57,6 +57,10 @@ library(data.table)
 victoria_small_merged_1 <- fread("victoria_small_merged_1.csv")
 
 power_victoria_merged_filtered <- fread("power_victoria_merged_filtered.csv")
+
+power_victoria_accel_filtered <- fread("power_victoria_accel_filtered.csv")
+
+power_victoria_filtered <- fread("power_victoria_filtered.csv")
 ```
 
 ## Regression Model (lm) with self-report PA and all predictors 
@@ -118,13 +122,13 @@ plot(cooks_plot)
 
 ## Negative binomial regression with just percent and summary count
 ```{r}
-nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_merged_filtered)
+nb_regression_1 <- glm.nb(summary_count ~ percent, data = power_victoria_accel_filtered)
 summary(nb_regression_1)
 ```
 
-## Negative binomial regression with all predictors
+## Negative binomial regression with all predictors - updated
 ```{r}
-nb_regression_2 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_merged_filtered)
+nb_regression_2 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_accel_filtered)
 summary(nb_regression_2)
 ```
 
@@ -194,4 +198,16 @@ ggplot(power_victoria_merged_filtered, aes(y =
                labs(title = "Exposure to Pandora protected cycling lane and Physical Activity (Activity Counts)",
                  x = "Exposure to Pandora (Percentage of total points",
                  y = "Activity Counts")
+```
+
+## Filtered exposure - updating regression models
+```{r}
+nb_regression_3 <- glm.nb(summary_count ~ percent, data = power_victoria_filtered)
+summary(nb_regression_3)
+```
+
+## Negative binomial regression with all predictors - updated with filtered exposure data
+```{r}
+nb_regression_4 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_filtered)
+summary(nb_regression_4)
 ```

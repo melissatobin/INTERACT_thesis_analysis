@@ -48,6 +48,7 @@ library(anytime)
 library(stringr)
 library(stringi)
 library(finalfit)
+library(data.table)
 ```
 
 ## Reading in Data to make sure timestamps code was right
@@ -203,7 +204,7 @@ write_csv(victoria_small_merged_1, "victoria_small_merged_1.csv")
 ##Plotting exposure 
 ```{r}
 victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
-tabyl(victoria_small_merged_1$percent)
+
 exposure_plot <- ggplot(victoria_small_merged_1) + 
                       geom_histogram(aes(percent), bins =80) +
   labs(title = "Exposure to the Pandora Protected Cycling Lane",
@@ -215,6 +216,21 @@ plot(exposure_plot)
 summary(victoria_small_merged_1$percent)
 sd(victoria_small_merged_1$percent)
 describeBy(victoria_small_merged_1$percent)
+```
+
+
+## Filtering exposure data for outliers (>40%)
+```{r}
+victoria_exposure_filtered <- victoria_small_merged_1 %>% dplyr::filter(percent <= 40)
+tabyl(victoria_exposure_filtered$percent)
+
+exposure_filtered_plot <- ggplot(victoria_exposure_filtered) + 
+                      geom_histogram(aes(percent), bins =80) +
+  labs(title = "Exposure to the Pandora Protected Cycling Lane",
+       x = "Percent Exposure",
+       y = "Number of Participants (n)")
+
+plot(exposure_filtered_plot)
 ```
 
 ## Self-report PA stats
@@ -263,6 +279,13 @@ write_csv(power_victoria_accel_filtered, "power_victoria_accel_filtered.csv")
 summary(power_victoria_accel_filtered$summary_count)
 sd(power_victoria_accel_filtered$summary_count)
 describeBy(power_victoria_accel_filtered$summary_count)
+```
+
+## Filtering accelerometer data for filtered exposure data
+```{r}
+power_victoria_accel_filtered <- fread("power_victoria_accel_filtered.csv")
+
+power_victoria_filtered <- power_victoria_accel_filtered %>% dplyr::filter(percent <= 40)
 ```
 
 ## Plotting Accelerometer data
