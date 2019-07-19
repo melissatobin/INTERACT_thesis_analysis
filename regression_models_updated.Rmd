@@ -61,6 +61,8 @@ power_victoria_merged_filtered <- fread("power_victoria_merged_filtered.csv")
 power_victoria_accel_filtered <- fread("power_victoria_accel_filtered.csv")
 
 power_victoria_filtered <- fread("power_victoria_filtered.csv")
+
+victoria_exposure_filtered <- read_csv("victoria_exposure_filtered.csv")
 ```
 
 ## Regression Model (lm) with self-report PA and all predictors 
@@ -208,6 +210,19 @@ summary(nb_regression_3)
 
 ## Negative binomial regression with all predictors - updated with filtered exposure data
 ```{r}
+power_victoria_filtered$income_2 <- factor(power_victoria_filtered$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+
 nb_regression_4 <- glm.nb(summary_count ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = power_victoria_filtered)
 summary(nb_regression_4)
+confint(nb_regression_4)
 ```
+
+## Multiple Regression with all predictors - updated with filtered exposure data
+```{r}
+victoria_exposure_filtered$income_2 <- factor(victoria_exposure_filtered$income_2, c("$49,000 or less", "$50,000 to $99,999", "$100,000 to $149,999", "$150,000 or more", "I don't know/Prefer not to answer")) 
+
+lm_2 <- lm(total_pa_met_formula ~ percent + gender_updated + age_categories + ethnicity_updated + income_2 + mean_temp_date + total_precip_date, data = victoria_exposure_filtered)
+summary(lm_2)
+confint(lm_2)
+```
+

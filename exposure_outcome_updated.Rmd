@@ -213,6 +213,7 @@ exposure_plot <- ggplot(victoria_small_merged_1) +
                 
 plot(exposure_plot)
 
+tabyl(victoria_small_merged_1$percent)
 summary(victoria_small_merged_1$percent)
 sd(victoria_small_merged_1$percent)
 describeBy(victoria_small_merged_1$percent)
@@ -221,7 +222,11 @@ describeBy(victoria_small_merged_1$percent)
 
 ## Filtering exposure data for outliers (>40%)
 ```{r}
+victoria_small_merged_1 <- read_csv("victoria_small_merged_1.csv")
+
 victoria_exposure_filtered <- victoria_small_merged_1 %>% dplyr::filter(percent <= 40)
+
+write_csv(victoria_exposure_filtered, "victoria_exposure_filtered.csv")
 tabyl(victoria_exposure_filtered$percent)
 
 exposure_filtered_plot <- ggplot(victoria_exposure_filtered) + 
@@ -231,18 +236,25 @@ exposure_filtered_plot <- ggplot(victoria_exposure_filtered) +
        y = "Number of Participants (n)")
 
 plot(exposure_filtered_plot)
+
+summary(victoria_exposure_filtered$percent)
+sd(victoria_exposure_filtered$percent)
+describeBy(victoria_exposure_filtered$percent)
+
+describeBy(victoria_exposure_filtered$percent, victoria_exposure_filtered$gender)
 ```
 
 ## Self-report PA stats
 ```{r}
-summary(victoria_small_merged_1$total_pa_met_formula)
-sd(victoria_small_merged_1$total_pa_met_formula)
-describeBy(victoria_small_merged_1$total_pa_met_formula)
+summary(victoria_exposure_filtered$total_pa_met_formula)
+sd(victoria_exposure_filtered$total_pa_met_formula)
+describeBy(victoria_exposure_filtered$total_pa_met_formula)
+describeBy(victoria_exposure_filtered$total_pa_met_formula, victoria_exposure_filtered$gender)
 ```
 
 ## Plotting outcome 
 ```{r}
-pa_total_plot <- ggplot(victoria_small_merged_1) + 
+pa_total_plot <- ggplot(victoria_exposure_filtered) + 
                       geom_histogram(aes(total_pa_met_formula), bins = 80) +
   labs(title = "Total MET-minutes of Physical Activity",
        x = "Total MET-minutes of PA",
@@ -286,6 +298,11 @@ describeBy(power_victoria_accel_filtered$summary_count)
 power_victoria_accel_filtered <- fread("power_victoria_accel_filtered.csv")
 
 power_victoria_filtered <- power_victoria_accel_filtered %>% dplyr::filter(percent <= 40)
+
+summary(power_victoria_filtered$summary_count)
+sd(power_victoria_filtered$summary_count)
+describeBy(power_victoria_filtered$summary_count)
+describeBy(power_victoria_filtered$summary_count, power_victoria_filtered$gender_updated)
 ```
 
 ## Plotting Accelerometer data
