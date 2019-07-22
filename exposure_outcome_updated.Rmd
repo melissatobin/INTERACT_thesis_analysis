@@ -299,6 +299,7 @@ power_victoria_accel_filtered <- fread("power_victoria_accel_filtered.csv")
 
 power_victoria_filtered <- power_victoria_accel_filtered %>% dplyr::filter(percent <= 40)
 
+write_csv(power_victoria_filtered, "power_victoria_filtered.csv")
 summary(power_victoria_filtered$summary_count)
 sd(power_victoria_filtered$summary_count)
 describeBy(power_victoria_filtered$summary_count)
